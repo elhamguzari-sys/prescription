@@ -1,0 +1,2022 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ══════════════════════════════════════════════════════════
+       Header
+       ══════════════════════════════════════════════════════════ */
+    .rp-page-header {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 22px; flex-wrap: wrap; gap: 12px;
+    }
+    .rp-page-header h1 {
+        margin: 0 0 4px; font-size: 26px; font-weight: 800;
+        color: #0f172a; display: flex; align-items: center; gap: 10px;
+    }
+    .rp-page-header p { margin: 0; font-size: 14px; color: #6b7280; }
+
+    .btn-back-rp {
+        background: white; color: #6b7280; border: 1.5px solid #e5e7eb;
+        padding: 11px 20px; border-radius: 11px; font-weight: 700;
+        font-size: 14px; display: inline-flex; align-items: center;
+        gap: 8px; text-decoration: none;
+    }
+    .btn-back-rp:hover { background: #f3f4f6; color: #111827; }
+
+    .btn-create-rp {
+        background: linear-gradient(135deg, #7c3aed, #5b21b6);
+        color: white; border: none; padding: 12px 22px;
+        border-radius: 11px; font-weight: 700; font-size: 14px;
+        display: inline-flex; align-items: center; gap: 8px;
+        cursor: pointer; box-shadow: 0 6px 18px rgba(124,58,237,0.3);
+        font-family: inherit;
+    }
+    .btn-create-rp:hover { transform: translateY(-2px); color: white; }
+
+    /* ══════════════════════════════════════════════════════════
+       Stats
+       ══════════════════════════════════════════════════════════ */
+    .rp-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 12px; margin-bottom: 22px;
+    }
+    .rp-stat-card {
+        background: white; border-radius: 14px; padding: 16px 20px;
+        border: 1.5px solid #e5e7eb; display: flex; align-items: center;
+        gap: 12px; box-shadow: 0 3px 12px rgba(0,0,0,0.04);
+    }
+    .rp-stat-icon {
+        width: 44px; height: 44px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 20px; flex-shrink: 0;
+    }
+    .rp-stat-icon.total    { background: #ede9fe; color: #5b21b6; }
+    .rp-stat-icon.active   { background: #dcfce7; color: #166534; }
+    .rp-stat-icon.favorite { background: #fef3c7; color: #92400e; }
+    .rp-stat-icon.meds     { background: #dbeafe; color: #1e40af; }
+    .rp-stat-num { font-size: 22px; font-weight: 800; color: #0f172a; line-height: 1; }
+    .rp-stat-lbl { font-size: 12.5px; color: #6b7280; font-weight: 600; margin-top: 3px; }
+
+    /* ══════════════════════════════════════════════════════════
+       Filter bar
+       ══════════════════════════════════════════════════════════ */
+    .rp-filter-bar {
+        background: white; border-radius: 14px; padding: 16px 20px;
+        margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;
+        box-shadow: 0 3px 12px rgba(0,0,0,0.04);
+    }
+    .rp-filter-bar input,
+    .rp-filter-bar select {
+        border: 1.5px solid #e5e7eb; border-radius: 10px;
+        padding: 10px 14px; font-size: 13.5px; background: #f9fafb;
+        font-family: inherit;
+    }
+    .rp-filter-bar input:focus,
+    .rp-filter-bar select:focus {
+        outline: none; border-color: #7c3aed; background: white;
+        box-shadow: 0 0 0 3px rgba(124,58,237,0.1);
+    }
+    .rp-filter-bar input { flex: 1; min-width: 220px; }
+    .rp-filter-bar select { min-width: 160px; }
+
+    .btn-filter-rp {
+        background: #7c3aed; color: white; border: none;
+        padding: 10px 22px; border-radius: 10px; font-weight: 700;
+        font-size: 13.5px; cursor: pointer;
+        display: inline-flex; align-items: center; gap: 6px;
+        font-family: inherit;
+    }
+    .btn-filter-rp:hover { background: #5b21b6; }
+
+    .btn-reset-rp {
+        background: #f3f4f6; color: #6b7280;
+        border: 1.5px solid #e5e7eb; padding: 10px 18px;
+        border-radius: 10px; font-weight: 700; font-size: 13.5px;
+        text-decoration: none;
+        display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-reset-rp:hover { background: #e5e7eb; color: #111827; }
+
+    /* ══════════════════════════════════════════════════════════
+       Cards grid
+       ══════════════════════════════════════════════════════════ */
+    .rp-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 16px;
+    }
+
+    .rp-card {
+        background: white; border-radius: 16px;
+        border: 1.5px solid #e5e7eb; padding: 20px;
+        box-shadow: 0 3px 12px rgba(0,0,0,0.04);
+        transition: all 0.15s;
+        display: flex; flex-direction: column;
+        position: relative;
+    }
+    .rp-card:hover {
+        border-color: #c4b5fd;
+        box-shadow: 0 8px 24px rgba(124,58,237,0.12);
+        transform: translateY(-2px);
+    }
+    .rp-card.is-favorite {
+        border-color: #fcd34d;
+        background: linear-gradient(180deg, #fffbeb 0%, #ffffff 30%);
+    }
+    .rp-card.inactive { opacity: 0.55; }
+
+    .rp-card-header {
+        display: flex; justify-content: space-between;
+        align-items: flex-start; gap: 10px; margin-bottom: 12px;
+    }
+    .rp-card-title {
+        font-size: 17px; font-weight: 800; color: #0f172a;
+        margin: 0; line-height: 1.4;
+    }
+    .rp-card-fav {
+        width: 34px; height: 34px; border-radius: 9px;
+        background: #fef3c7; color: #f59e0b;
+        border: none; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 16px; transition: all 0.15s; flex-shrink: 0;
+    }
+    .rp-card-fav:hover { background: #fde68a; }
+    .rp-card-fav.active { background: #fbbf24; color: white; }
+
+    .rp-card-preview {
+        margin: 10px 0 14px;
+        font-size: 13.5px;
+        color: #64748b;
+        line-height: 1.7;
+        min-height: 42px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .rp-card-preview.empty {
+        color: #cbd5e1;
+        font-style: italic;
+    }
+
+    .rp-card-summary {
+        display: flex; gap: 16px; margin: 10px 0 14px;
+        padding: 12px 14px;
+        background: #f8fafc;
+        border-radius: 10px;
+        border: 1.5px solid #eef2f7;
+    }
+    .rp-card-summary-item {
+        display: flex; flex-direction: column; align-items: center;
+        gap: 4px; flex: 1;
+        text-align: center;
+    }
+    .rp-card-summary-num {
+        font-size: 18px; font-weight: 800; color: #7c3aed;
+        line-height: 1;
+        display: flex; align-items: center; gap: 5px;
+    }
+    .rp-card-summary-num.green { color: #059669; }
+    .rp-card-summary-lbl {
+        font-size: 11.5px; font-weight: 700; color: #64748b;
+    }
+
+    .rp-card-actions {
+        display: flex; gap: 6px;
+        align-items: center;
+        margin-top: auto;
+    }
+    .rp-action-btn {
+        height: 38px; padding: 0 14px;
+        border-radius: 10px;
+        border: none; cursor: pointer;
+        display: inline-flex; align-items: center; justify-content: center;
+        gap: 6px;
+        font-size: 13.5px; font-weight: 700;
+        text-decoration: none;
+        transition: all 0.15s;
+        font-family: inherit;
+    }
+    .rp-action-btn.view {
+        background: #ede9fe; color: #6d28d9;
+        flex: 1;
+    }
+    .rp-action-btn.view:hover { background: #7c3aed; color: white; }
+    .rp-action-btn.icon-only {
+        width: 38px; padding: 0;
+    }
+    .rp-action-btn.edit { background: #fef3c7; color: #92400e; }
+    .rp-action-btn.edit:hover { background: #f59e0b; color: white; }
+    .rp-action-btn.delete { background: #fee2e2; color: #991b1b; }
+    .rp-action-btn.delete:hover { background: #dc2626; color: white; }
+    .rp-action-btn.toggle { background: #f0fdf4; color: #059669; }
+    .rp-action-btn.toggle:hover { background: #059669; color: white; }
+
+    .rp-empty {
+        text-align: center; padding: 80px 20px; color: #9ca3af;
+        grid-column: 1 / -1;
+    }
+    .rp-empty i { font-size: 72px; display: block; margin-bottom: 16px; opacity: 0.4; }
+    .rp-empty p { font-size: 15px; margin: 0 0 16px; }
+
+    /* ══════════════════════════════════════════════════════════
+       Modal — Create/Edit
+       ══════════════════════════════════════════════════════════ */
+    .rp-modal .modal-dialog { max-width: 900px; }
+    .rp-modal .modal-content {
+        border-radius: 18px; border: none; overflow: hidden;
+    }
+    .rp-modal .modal-header {
+        background: linear-gradient(135deg, #7c3aed, #5b21b6);
+        color: white; padding: 22px 28px; border: none;
+    }
+    .rp-modal .modal-header h5 {
+        font-weight: 800; font-size: 19px; margin: 0;
+        display: flex; align-items: center; gap: 10px;
+    }
+    .rp-modal .modal-body {
+        padding: 24px; background: #f9fafb;
+        max-height: 72vh; overflow-y: auto;
+    }
+    .rp-modal .modal-footer {
+        background: white; border-top: 1.5px solid #e5e7eb;
+        padding: 14px 24px;
+        display: flex; justify-content: space-between; gap: 10px;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       Modal — View Details
+       ══════════════════════════════════════════════════════════ */
+    .rp-view-modal .modal-dialog { max-width: 800px; }
+    .rp-view-modal .modal-content {
+        border-radius: 18px; border: none; overflow: hidden;
+    }
+    .rp-view-modal .modal-header {
+        background: linear-gradient(135deg, #7c3aed, #5b21b6);
+        color: white; padding: 22px 28px; border: none;
+    }
+    .rp-view-modal .modal-header h5 {
+        font-weight: 800; font-size: 19px; margin: 0;
+        display: flex; align-items: center; gap: 10px;
+    }
+    .rp-view-modal .modal-body {
+        padding: 24px; background: #f9fafb;
+        max-height: 75vh; overflow-y: auto;
+    }
+    .rp-view-modal .modal-footer {
+        background: white; border-top: 1.5px solid #e5e7eb;
+        padding: 14px 24px;
+        display: flex; justify-content: flex-end; gap: 10px;
+    }
+
+    /* Hero header inside view modal */
+    .rv-hero {
+        background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+        border-radius: 14px;
+        padding: 22px 24px;
+        margin-bottom: 16px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+    .rv-hero::before {
+        content: '';
+        position: absolute;
+        top: -40px; right: -40px;
+        width: 160px; height: 160px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 50%;
+    }
+    .rv-hero::after {
+        content: '';
+        position: absolute;
+        bottom: -60px; left: -30px;
+        width: 140px; height: 140px;
+        background: rgba(255,255,255,0.06);
+        border-radius: 50%;
+    }
+    .rv-hero-content { position: relative; z-index: 1; }
+    .rv-hero-title {
+        font-size: 22px;
+        font-weight: 800;
+        margin: 0 0 8px;
+        line-height: 1.3;
+    }
+    .rv-hero-stats {
+        display: flex;
+        gap: 18px;
+        margin-top: 14px;
+        flex-wrap: wrap;
+    }
+    .rv-hero-stat {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13.5px;
+        font-weight: 600;
+        background: rgba(255,255,255,0.12);
+        padding: 6px 12px;
+        border-radius: 8px;
+    }
+    .rv-hero-stat i { font-size: 15px; }
+
+    /* Sections */
+    .rv-section {
+        background: white; border-radius: 12px;
+        padding: 18px 20px; margin-bottom: 14px;
+        border: 1.5px solid #e5e7eb;
+    }
+    .rv-section:last-child { margin-bottom: 0; }
+    .rv-section-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 14px;
+        font-weight: 800;
+        color: #6d28d9;
+        margin-bottom: 14px;
+        padding-bottom: 12px;
+        border-bottom: 1.5px dashed #e9d5ff;
+    }
+    .rv-section-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 9px;
+        background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+        color: #6d28d9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        flex-shrink: 0;
+    }
+    .rv-text {
+        font-size: 14.5px; color: #1e293b;
+        line-height: 1.9; font-weight: 500;
+        white-space: pre-wrap;
+    }
+    .rv-text.empty { color: #cbd5e1; font-style: italic; }
+
+    /* Medicine cards in view modal */
+    .rv-med-card {
+        background: linear-gradient(180deg, #faf5ff 0%, #ffffff 30%);
+        border: 1.5px solid #e9d5ff;
+        border-radius: 14px;
+        padding: 16px 18px;
+        margin-bottom: 12px;
+        position: relative;
+        transition: all 0.15s;
+    }
+    .rv-med-card:hover {
+        border-color: #c4b5fd;
+        box-shadow: 0 6px 20px rgba(124,58,237,0.1);
+        transform: translateY(-1px);
+    }
+    .rv-med-card:last-child { margin-bottom: 0; }
+
+    .rv-med-card-num {
+        position: absolute;
+        top: -12px;
+        right: 16px;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #7c3aed, #5b21b6);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 800;
+        box-shadow: 0 4px 12px rgba(124,58,237,0.35);
+    }
+
+    .rv-med-card-header {
+        margin-bottom: 14px;
+        padding-right: 12px;
+    }
+    .rv-med-card-name {
+        font-size: 16px;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0 0 4px;
+        line-height: 1.4;
+    }
+    .rv-med-card-sub {
+        font-size: 12.5px;
+        color: #64748b;
+        font-weight: 600;
+    }
+    .rv-med-card-chips {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .rv-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12.5px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+    .rv-chip i { font-size: 13px; }
+    .rv-chip.dose     { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .rv-chip.freq     { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+    .rv-chip.timing   { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+    .rv-chip.route    { background: #fce7f3; color: #9d174d; border: 1px solid #fbcfe8; }
+    .rv-chip.duration { background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; }
+    /* ⭐ NEW — quantity chip */
+    .rv-chip.quantity {
+        background: #fee2e2; color: #991b1b; border: 1px solid #dc2626;
+    }
+    .rv-chip.empty    { background: #f3f4f6; color: #94a3b8; border: 1px solid #e5e7eb; font-style: italic; }
+
+    /* ══════════════════════════════════════════════════════════
+       Form sections
+       ══════════════════════════════════════════════════════════ */
+    .rp-form-section {
+        background: white; border-radius: 12px;
+        padding: 20px 22px; margin-bottom: 18px;
+        border: 1.5px solid #e5e7eb;
+    }
+    .rp-form-section-title {
+        font-size: 15.5px;
+        font-weight: 800;
+        color: #6d28d9;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 2px dashed #e9d5ff;
+        display: flex; align-items: center; gap: 10px;
+    }
+    .rp-form-section-title .icon-box {
+        width: 34px; height: 34px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+        color: #6d28d9;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 17px;
+        flex-shrink: 0;
+    }
+
+    /* Bilingual labels */
+    .rp-form-label {
+        display: block;
+        font-size: 13.5px;
+        font-weight: 800;
+        color: #1e293b;
+        margin-bottom: 7px;
+        font-family: 'Arial', sans-serif;
+        letter-spacing: 0.2px;
+    }
+    .rp-form-label .fa {
+        font-family: inherit;
+        color: #64748b;
+        font-weight: 700;
+        font-size: 12.5px;
+        margin-right: 6px;
+    }
+    .rp-form-label .req {
+        color: #dc2626;
+        margin-left: 3px;
+        font-size: 15px;
+    }
+
+    .rp-form-control {
+        width: 100%; padding: 11px 14px;
+        border: 1.5px solid #e5e7eb; border-radius: 10px;
+        font-size: 14px; font-family: inherit;
+        background: white; box-sizing: border-box;
+    }
+    .rp-form-control:focus {
+        outline: none; border-color: #7c3aed;
+        box-shadow: 0 0 0 3px rgba(124,58,237,0.1);
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       Medication item row
+       ══════════════════════════════════════════════════════════ */
+    .med-item-row {
+        background: white; border: 2px solid #e2e8f0;
+        border-radius: 14px; padding: 22px 20px 16px;
+        margin-bottom: 16px;
+        position: relative;
+        z-index: 1;
+        transition: border-color 0.15s;
+    }
+    .med-item-row:hover { border-color: #c4b5fd; }
+    .med-item-row.filled {
+        border-color: #86efac;
+        background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 40%);
+    }
+    .med-item-row .med-num-badge {
+        position: absolute; top: -12px; right: 18px;
+        background: linear-gradient(135deg, #7c3aed, #5b21b6);
+        color: white; width: 30px; height: 30px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 13px; font-weight: 800;
+        box-shadow: 0 4px 10px rgba(124,58,237,0.3);
+        z-index: 10;
+    }
+    .med-item-row .remove-btn {
+        position: absolute; top: 12px; left: 12px;
+        width: 32px; height: 32px; border-radius: 9px;
+        background: #fee2e2; color: #991b1b; border: none;
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 15px; transition: all 0.15s;
+        z-index: 10;
+    }
+    .med-item-row .remove-btn:hover {
+        background: #dc2626; color: white; transform: rotate(90deg);
+    }
+
+    /* Medicine search dropdown */
+    .med-search-wrap { position: relative; margin-bottom: 16px; }
+    .med-search-wrap label {
+        display: block; font-size: 13px; font-weight: 800;
+        color: #6d28d9; margin-bottom: 8px;
+        letter-spacing: 0.4px;
+        font-family: 'Arial', sans-serif;
+    }
+    .med-search-wrap label .fa {
+        font-family: inherit;
+        color: #64748b;
+        font-size: 12px;
+        margin-right: 5px;
+        font-weight: 700;
+    }
+    .med-search-input {
+        width: 100%; padding: 12px 44px 12px 16px;
+        border: 1.5px solid #e2e8f0; border-radius: 11px;
+        font-size: 15px; background: #f8fafc;
+        font-family: inherit; color: #0f172a;
+        cursor: pointer; transition: all 0.2s;
+        box-sizing: border-box;
+    }
+    .med-search-input:focus {
+        outline: none; border-color: #7c3aed;
+        background: white;
+        box-shadow: 0 0 0 4px rgba(124,58,237,0.1);
+        cursor: text;
+    }
+    .med-search-arrow {
+        position: absolute; left: 16px; top: 40px;
+        color: #94a3b8; pointer-events: none;
+        font-size: 14px; z-index: 1;
+    }
+    .med-search-wrap.open .med-search-arrow { color: #7c3aed; }
+    .med-search-menu {
+        position: absolute; top: 100%; left: 0; right: 0;
+        background: white; border: 2px solid #7c3aed;
+        border-radius: 14px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.25),
+                    0 0 0 4px rgba(124,58,237,0.08);
+        max-height: 320px; overflow-y: auto;
+        z-index: 10000; display: none;
+        padding: 8px; margin-top: 6px;
+    }
+    .med-search-wrap.open .med-search-menu { display: block; }
+
+    .med-combos-row {
+        display: grid; grid-template-columns: 1fr 1fr;
+        gap: 14px; margin-bottom: 12px;
+    }
+
+    /* ⭐ NEW — Quantity input */
+    .med-quantity-wrap {
+        position: relative;
+    }
+    .med-quantity-wrap .combo-label {
+        display: block; font-size: 12.5px; font-weight: 800;
+        color: #1e293b; margin-bottom: 8px;
+        letter-spacing: 0.4px;
+        font-family: 'Arial', sans-serif;
+    }
+    .med-quantity-wrap .combo-label i { color: #7c3aed; margin-right: 4px; }
+    .med-quantity-wrap .combo-label .fa {
+        font-family: inherit;
+        color: #64748b;
+        font-size: 12px;
+        margin-right: 5px;
+        font-weight: 700;
+    }
+    .med-quantity-input {
+        width: 100%; padding: 12px 16px;
+        border: 1.5px solid #e2e8f0; border-radius: 11px;
+        font-size: 15px; background: #f8fafc;
+        font-family: inherit; color: #0f172a;
+        transition: all 0.2s; box-sizing: border-box;
+        font-weight: 800; text-align: center;
+    }
+    .med-quantity-input:focus {
+        outline: none; border-color: #7c3aed;
+        background: white;
+        box-shadow: 0 0 0 4px rgba(124,58,237,0.1);
+    }
+    .med-quantity-hint {
+        font-size: 11px; color: #94a3b8;
+        margin-top: 4px; text-align: center;
+        font-weight: 500;
+    }
+
+    /* Combo box */
+    .combo-wrap { position: relative; }
+    .combo-wrap.open { z-index: 9999; }
+    .combo-label {
+        display: block; font-size: 12.5px; font-weight: 800;
+        color: #1e293b; margin-bottom: 8px;
+        letter-spacing: 0.4px;
+        font-family: 'Arial', sans-serif;
+    }
+    .combo-label i { color: #7c3aed; margin-right: 4px; }
+    .combo-label .fa {
+        font-family: inherit;
+        color: #64748b;
+        font-size: 12px;
+        margin-right: 5px;
+        font-weight: 700;
+    }
+    .combo-input-wrap { position: relative; }
+    .combo-input {
+        width: 100%; padding: 12px 42px 12px 14px;
+        border: 1.5px solid #e2e8f0; border-radius: 11px;
+        font-size: 14.5px; background: #f8fafc;
+        font-family: inherit; color: #0f172a;
+        cursor: text; transition: all 0.2s;
+        box-sizing: border-box; font-weight: 600;
+    }
+    .combo-input:focus {
+        outline: none; border-color: #7c3aed;
+        background: white;
+        box-shadow: 0 0 0 4px rgba(124,58,237,0.1);
+    }
+    .combo-input::placeholder { color: #94a3b8; font-weight: 500; }
+    .combo-arrow {
+        position: absolute; left: 14px; top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8; pointer-events: none;
+        font-size: 13px; transition: transform 0.2s;
+    }
+    .combo-wrap.open .combo-arrow {
+        transform: translateY(-50%) rotate(180deg);
+        color: #7c3aed;
+    }
+    .combo-menu {
+        position: absolute; top: calc(100% + 6px);
+        left: 0; right: 0; background: white;
+        border: 2px solid #7c3aed; border-radius: 12px;
+        box-shadow: 0 16px 40px rgba(0,0,0,0.2),
+                    0 0 0 4px rgba(124,58,237,0.06);
+        max-height: 260px; overflow-y: auto;
+        z-index: 10000; display: none; padding: 6px;
+    }
+    .combo-wrap.open .combo-menu { display: block; }
+    .combo-item {
+        padding: 10px 14px; border-radius: 8px;
+        cursor: pointer; font-size: 14px; font-weight: 600;
+        color: #0f172a; transition: background 0.12s;
+        margin-bottom: 2px;
+        display: flex; align-items: center;
+        justify-content: space-between;
+    }
+    .combo-item:hover,
+    .combo-item.highlighted {
+        background: #f5f3ff; color: #7c3aed;
+    }
+    .combo-item.selected {
+        background: #ede9fe; color: #6d28d9; font-weight: 800;
+    }
+    .combo-item.selected::after {
+        content: '\F26E'; font-family: 'bootstrap-icons';
+        color: #7c3aed; font-size: 14px;
+    }
+    .combo-empty {
+        padding: 20px; text-align: center;
+        color: #94a3b8; font-size: 13px;
+    }
+    .combo-custom-hint {
+        padding: 10px 14px; border-radius: 8px;
+        background: #ede9fe; color: #5b21b6;
+        font-size: 13px; font-weight: 700;
+        cursor: pointer;
+        display: flex; align-items: center; gap: 8px;
+        margin-top: 4px;
+        border-top: 1.5px dashed #c4b5fd;
+    }
+    .combo-custom-hint:hover { background: #ddd6fe; }
+
+    /* Medicine search dropdown items */
+    .sd-item {
+        padding: 12px 16px; border-radius: 10px;
+        cursor: pointer; display: flex; align-items: center;
+        gap: 12px; transition: background 0.12s; margin-bottom: 3px;
+    }
+    .sd-item:hover, .sd-item.highlighted { background: #f5f3ff; }
+    .sd-item.selected { background: #ede9fe; }
+    .sd-item-avatar {
+        width: 40px; height: 40px; border-radius: 11px;
+        background: linear-gradient(135deg, #7c3aed, #5b21b6);
+        color: white; display: flex; align-items: center;
+        justify-content: center; font-weight: 800;
+        font-size: 15px; flex-shrink: 0;
+        position: relative;
+    }
+    .sd-item-avatar .fav-star {
+        position: absolute;
+        top: -4px; right: -4px;
+        width: 18px; height: 18px;
+        border-radius: 50%;
+        background: #f59e0b;
+        color: white;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 10px;
+        border: 2px solid white;
+        box-shadow: 0 2px 4px rgba(245,158,11,0.4);
+    }
+    .sd-item-info { flex: 1; min-width: 0; }
+    .sd-item-name {
+        font-size: 15px; font-weight: 700; color: #0f172a;
+        margin-bottom: 3px;
+        white-space: nowrap; overflow: hidden;
+        text-overflow: ellipsis;
+        display: flex; align-items: center; gap: 6px;
+    }
+    .sd-item-name .star-inline {
+        color: #f59e0b;
+        font-size: 13px;
+        flex-shrink: 0;
+    }
+    .sd-item-meta {
+        font-size: 12.5px; color: #64748b; font-weight: 500;
+    }
+    .sd-empty {
+        padding: 36px 20px; text-align: center;
+        color: #94a3b8; font-size: 14px;
+    }
+    .sd-empty i {
+        font-size: 36px; display: block;
+        margin-bottom: 10px; opacity: 0.4;
+    }
+    .sd-loading {
+        padding: 30px 20px; text-align: center;
+        color: #7c3aed; font-size: 14px;
+    }
+    .sd-loading i {
+        font-size: 24px; display: block;
+        margin-bottom: 8px;
+        animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to   { transform: rotate(360deg); }
+    }
+
+    .btn-add-med {
+        background: #f5f3ff; color: #7c3aed;
+        border: 2px dashed #c4b5fd;
+        padding: 12px; border-radius: 10px;
+        font-weight: 700; font-size: 13px;
+        cursor: pointer; width: 100%;
+        display: flex; align-items: center; justify-content: center;
+        gap: 8px; font-family: inherit; margin-top: 8px;
+    }
+    .btn-add-med:hover { background: #ede9fe; }
+
+    .rp-modal-error {
+        background: #fef2f2; border: 2px solid #fca5a5;
+        border-radius: 12px; padding: 14px 18px;
+        margin-bottom: 18px; display: none;
+    }
+    .rp-modal-error.show { display: block; }
+    .rp-modal-error-title {
+        font-size: 13.5px; font-weight: 800;
+        color: #991b1b; display: flex; align-items: center;
+        gap: 8px; margin-bottom: 6px;
+    }
+    .rp-modal-error-text {
+        margin: 0; color: #7f1d1d; font-size: 14px;
+        font-weight: 600; line-height: 1.8;
+    }
+
+    .btn-modal-cancel {
+        background: #f3f4f6; color: #374151; border: none;
+        padding: 11px 24px; border-radius: 10px;
+        font-weight: 700; font-size: 14px;
+        cursor: pointer; font-family: inherit;
+    }
+    .btn-modal-cancel:hover { background: #e5e7eb; }
+
+    .btn-modal-submit {
+        background: linear-gradient(135deg, #7c3aed, #5b21b6);
+        color: white; border: none;
+        padding: 11px 26px; border-radius: 10px;
+        font-weight: 700; font-size: 14px;
+        cursor: pointer; font-family: inherit;
+        display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-modal-submit:hover { color: white; }
+
+    .rp-modal-checkboxes {
+        display: flex; gap: 20px; flex-wrap: wrap;
+        padding: 12px 16px; background: white;
+        border-radius: 10px; border: 1.5px solid #e5e7eb;
+        margin-top: 10px;
+    }
+    .rp-modal-checkboxes label {
+        display: flex; align-items: center; gap: 8px;
+        font-size: 13.5px; font-weight: 700;
+        color: #374151; cursor: pointer;
+    }
+    .rp-modal-checkboxes label .fa {
+        color: #64748b;
+        font-weight: 700;
+        font-size: 12.5px;
+    }
+    .rp-modal-checkboxes input[type="checkbox"] {
+        width: 18px; height: 18px; accent-color: #7c3aed;
+    }
+
+    @media (max-width: 768px) {
+        .rp-grid { grid-template-columns: 1fr; }
+        .rp-modal .modal-dialog { max-width: 100%; margin: 8px; }
+        .rp-modal .modal-body { padding: 16px; }
+        .rp-form-section { padding: 14px 16px; }
+        .med-combos-row { grid-template-columns: 1fr; }
+        .rp-card-summary { gap: 8px; }
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<!-- ═══ Header ═══ -->
+<div class="rp-page-header">
+    <div>
+        <h1>
+            <i class="bi bi-clipboard2-pulse-fill" style="color: #7c3aed;"></i>
+            {{ page_title }}
+        </h1>
+        <p>نسخه‌های آماده برای بیماری‌های مختلف</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <a href="{% url 'prescription_list' %}" class="btn-back-rp">
+            <i class="bi bi-arrow-right"></i> بازگشت
+        </a>
+        <button class="btn-create-rp" onclick="openCreateModal()">
+            <i class="bi bi-plus-circle-fill"></i> نسخه آماده جدید
+        </button>
+    </div>
+</div>
+
+
+<!-- ═══ Stats ═══ -->
+<div class="rp-stats">
+    <div class="rp-stat-card">
+        <div class="rp-stat-icon total"><i class="bi bi-collection-fill"></i></div>
+        <div><div class="rp-stat-num">{{ stats.total }}</div><div class="rp-stat-lbl">مجموع</div></div>
+    </div>
+    <div class="rp-stat-card">
+        <div class="rp-stat-icon active"><i class="bi bi-check-circle-fill"></i></div>
+        <div><div class="rp-stat-num">{{ stats.active }}</div><div class="rp-stat-lbl">فعال</div></div>
+    </div>
+    <div class="rp-stat-card">
+        <div class="rp-stat-icon favorite"><i class="bi bi-star-fill"></i></div>
+        <div><div class="rp-stat-num">{{ stats.favorites }}</div><div class="rp-stat-lbl">پرکاربرد</div></div>
+    </div>
+    <div class="rp-stat-card">
+        <div class="rp-stat-icon meds"><i class="bi bi-capsule"></i></div>
+        <div><div class="rp-stat-num">{{ stats.meds_total }}</div><div class="rp-stat-lbl">مجموع دواها</div></div>
+    </div>
+</div>
+
+
+<!-- ═══ Filter bar ═══ -->
+<form method="get" class="rp-filter-bar">
+    <input type="text" name="search" value="{{ search_query }}" placeholder="🔍 جستجو: عنوان، تشخیص، علائم...">
+
+    <select name="favorite">
+        <option value="">همه</option>
+        <option value="1" {% if favorite_filter == '1' %}selected{% endif %}>⭐ پرکاربرد</option>
+    </select>
+
+    <select name="active">
+        <option value="">همه وضعیت‌ها</option>
+        <option value="1" {% if active_filter == '1' %}selected{% endif %}>فعال</option>
+        <option value="0" {% if active_filter == '0' %}selected{% endif %}>غیرفعال</option>
+    </select>
+
+    <button type="submit" class="btn-filter-rp"><i class="bi bi-search"></i> جستجو</button>
+
+    {% if search_query or favorite_filter or active_filter %}
+    <a href="{% url 'ready_prescription_list' %}" class="btn-reset-rp"><i class="bi bi-x-circle"></i> پاک کردن</a>
+    {% endif %}
+</form>
+
+
+<!-- ═══ Cards grid ═══ -->
+<div class="rp-grid">
+    {% for rp in ready_prescriptions %}
+    <div class="rp-card {% if rp.is_favorite %}is-favorite{% endif %} {% if not rp.is_active %}inactive{% endif %}">
+
+        <div class="rp-card-header">
+            <h3 class="rp-card-title">{{ rp.title }}</h3>
+            <form method="post" style="display:inline;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="toggle_favorite">
+                <input type="hidden" name="ready_id" value="{{ rp.id }}">
+                <button type="submit" class="rp-card-fav {% if rp.is_favorite %}active{% endif %}" title="پرکاربرد">
+                    <i class="bi bi-star{% if rp.is_favorite %}-fill{% endif %}"></i>
+                </button>
+            </form>
+        </div>
+
+        {% if rp.diagnosis %}
+        <div class="rp-card-preview">
+            <i class="bi bi-clipboard2-check-fill" style="color:#059669;"></i>
+            {{ rp.diagnosis|truncatechars:80 }}
+        </div>
+        {% elif rp.signs_symptoms %}
+        <div class="rp-card-preview">
+            <i class="bi bi-chat-left-text-fill" style="color:#dc2626;"></i>
+            {{ rp.signs_symptoms|truncatechars:80 }}
+        </div>
+        {% else %}
+        <div class="rp-card-preview empty">بدون توضیحات</div>
+        {% endif %}
+
+        <div class="rp-card-summary">
+            <div class="rp-card-summary-item">
+                <div class="rp-card-summary-num">{{ rp.medications_count }}</div>
+                <div class="rp-card-summary-lbl">دوا</div>
+            </div>
+            {% if rp.diagnosis %}
+            <div class="rp-card-summary-item">
+                <div class="rp-card-summary-num green" style="font-size:18px;">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <div class="rp-card-summary-lbl">تشخیص</div>
+            </div>
+            {% endif %}
+            {% if rp.advice %}
+            <div class="rp-card-summary-item">
+                <div class="rp-card-summary-num" style="font-size:18px; color:#1d4ed8;">
+                    <i class="bi bi-chat-square-quote-fill"></i>
+                </div>
+                <div class="rp-card-summary-lbl">توصیه</div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="rp-card-actions">
+            <button type="button" class="rp-action-btn view" onclick="viewReady({{ rp.id }})" title="مشاهده جزئیات">
+                <i class="bi bi-eye-fill"></i> مشاهده جزئیات
+            </button>
+
+            <form method="post" style="display:inline;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="toggle_active">
+                <input type="hidden" name="ready_id" value="{{ rp.id }}">
+                <button type="submit" class="rp-action-btn icon-only toggle"
+                        title="{% if rp.is_active %}غیرفعال کردن{% else %}فعال کردن{% endif %}">
+                    <i class="bi bi-{% if rp.is_active %}pause-fill{% else %}play-fill{% endif %}"></i>
+                </button>
+            </form>
+
+            <button type="button" class="rp-action-btn icon-only edit" onclick="editReady({{ rp.id }})" title="ویرایش">
+                <i class="bi bi-pencil-fill"></i>
+            </button>
+
+            <button type="button" class="rp-action-btn icon-only delete"
+                    onclick="confirmDelete({{ rp.id }}, '{{ rp.title|escapejs }}')"
+                    title="حذف">
+                <i class="bi bi-trash-fill"></i>
+            </button>
+        </div>
+
+    </div>
+    {% empty %}
+    <div class="rp-empty">
+        <i class="bi bi-inbox"></i>
+        <p>هیچ نسخه آماده‌ای یافت نشد</p>
+        <button class="btn-create-rp" onclick="openCreateModal()">
+            <i class="bi bi-plus-circle-fill"></i> ساخت اولین نسخه آماده
+        </button>
+    </div>
+    {% endfor %}
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MODAL 1: Create / Edit
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="modal fade rp-modal" id="readyModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" id="readyForm" action="{% url 'ready_prescription_list' %}" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="action" id="formAction" value="create">
+                <input type="hidden" name="ready_id" id="formReadyId" value="">
+
+                <div class="modal-header">
+                    <h5 id="modalTitle">
+                        <i class="bi bi-plus-circle-fill"></i> نسخه آماده جدید
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="rp-modal-error" id="readyErrorBox">
+                        <div class="rp-modal-error-title">
+                            <i class="bi bi-exclamation-triangle-fill"></i> خطا
+                        </div>
+                        <p class="rp-modal-error-text" id="readyErrorText"></p>
+                    </div>
+
+                    <!-- ═══ BASE INFO ═══ -->
+                    <div class="rp-form-section">
+                        <div class="rp-form-section-title">
+                            <span class="icon-box"><i class="bi bi-info-circle-fill"></i></span>
+                            اطلاعات پایه <span class="fa">Base Info</span>
+                        </div>
+
+                        <label class="rp-form-label">
+                            Title <span class="fa">عنوان</span>
+                            <span class="req">*</span>
+                        </label>
+                        <input type="text" name="title" class="rp-form-control" required
+                               placeholder="مثال: سرماخوردگی بزرگسال">
+                    </div>
+
+                    <!-- ═══ CLINICAL ═══ -->
+                    <div class="rp-form-section">
+                        <div class="rp-form-section-title">
+                            <span class="icon-box"><i class="bi bi-clipboard2-pulse-fill"></i></span>
+                            اطلاعات بالینی <span class="fa">Clinical</span>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-md-12">
+                                <label class="rp-form-label">
+                                    Signs &amp; Symptoms <span class="fa">علائم و نشانه‌ها</span>
+                                </label>
+                                <textarea name="signs_symptoms" class="rp-form-control" rows="3"
+                                          placeholder="تب، سرفه خشک، گلودرد، آبریزش بینی..."></textarea>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="rp-form-label">
+                                    Diagnosis <span class="fa">تشخیص</span>
+                                </label>
+                                <input type="text" name="diagnosis" class="rp-form-control"
+                                       placeholder="مثال: عفونت تنفسی فوقانی">
+                            </div>
+                            <div class="col-md-12">
+                                <label class="rp-form-label">
+                                    Impression <span class="fa">برداشت بالینی</span>
+                                </label>
+                                <textarea name="impression" class="rp-form-control" rows="2"
+                                          placeholder="احتمالاً ویروسی، بدون علائم خطر..."></textarea>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="rp-form-label">
+                                    Doctor Note <span class="fa">یادداشت داکتر</span>
+                                </label>
+                                <textarea name="doctor_note" class="rp-form-control" rows="2"
+                                          placeholder="یادداشت داخلی..."></textarea>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="rp-form-label">
+                                    Advice <span class="fa">توصیه‌ها</span>
+                                </label>
+                                <textarea name="advice" class="rp-form-control" rows="3"
+                                          placeholder="استراحت، مایعات فراوان، گرم نگه‌داشتن گلو..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ═══ MEDICATIONS ═══ -->
+                    <div class="rp-form-section">
+                        <div class="rp-form-section-title">
+                            <span class="icon-box"><i class="bi bi-capsule"></i></span>
+                            لیست دواها <span class="fa">Medications</span>
+                        </div>
+                        <div id="medicationsContainer"></div>
+                        <button type="button" class="btn-add-med" onclick="addMedRow()">
+                            <i class="bi bi-plus-circle-fill"></i> افزودن دوا
+                        </button>
+                    </div>
+
+                    <div class="rp-modal-checkboxes">
+                        <label>
+                            <input type="checkbox" name="is_active" id="id_is_active" checked>
+                            فعال است <span class="fa">Active</span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="is_favorite" id="id_is_favorite">
+                            ⭐ پرکاربرد <span class="fa">Favorite</span>
+                        </label>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-modal-cancel" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg"></i> لغو
+                    </button>
+                    <button type="submit" class="btn-modal-submit" id="submitBtn">
+                        <i class="bi bi-check-lg"></i> ذخیره
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MODAL 2: View Details
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="modal fade rp-view-modal" id="viewModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5>
+                    <i class="bi bi-eye-fill"></i>
+                    View Details — جزئیات نسخه آماده
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body" id="viewModalBody">
+                <div style="text-align:center;padding:40px;">
+                    <i class="bi bi-hourglass-split" style="font-size:36px;color:#7c3aed;"></i>
+                    <p style="margin-top:12px;color:#6b7280;">در حال بارگذاری...</p>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-modal-cancel" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg"></i> بستن
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MODAL 3: Delete Confirmation
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 460px;">
+        <div class="modal-content" style="border-radius:18px;">
+            <form method="post" id="deleteForm" action="{% url 'ready_prescription_list' %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="ready_id" id="deleteReadyId" value="">
+
+                <div class="modal-body text-center p-4">
+                    <div style="width: 90px; height: 90px; margin: 0 auto 20px; border-radius: 50%;
+                                background: #fee2e2; display: flex; align-items: center;
+                                justify-content: center; font-size: 44px; color: #dc2626;">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">تایید حذف</h4>
+                    <p class="text-muted mb-0">
+                        آیا مطمئن هستید که می‌خواهید نسخه آماده<br>
+                        <strong id="deleteReadyTitle" style="color:#dc2626;"></strong><br>
+                        را حذف کنید؟
+                    </p>
+                </div>
+
+                <div class="modal-footer justify-content-center" style="border:none;">
+                    <button type="button" class="btn-modal-cancel" data-bs-dismiss="modal">لغو</button>
+                    <button type="submit" class="btn btn-danger"
+                            style="border-radius:10px; padding:11px 26px; font-weight:700;">
+                        <i class="bi bi-trash-fill"></i> بله، حذف کن
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+    // ═══════════════════════════════════════════════════════════
+    // URLs
+    // ═══════════════════════════════════════════════════════════
+    const READY_API_URL = "{% url 'api_ready_prescription_detail' 999999 %}";
+    const MEDICINE_SEARCH_URL = "{% url 'api_search_medications' %}";
+
+    // ═══════════════════════════════════════════════════════════
+    // Option lists (small + static)
+    // ═══════════════════════════════════════════════════════════
+    const FREQUENCIES = [
+        {v: "1x",   l: "Once Daily"},
+        {v: "2x",   l: "Twice Daily"},
+        {v: "3x",   l: "Three Times Daily"},
+        {v: "4x",   l: "Four Times Daily"},
+        {v: "q6h",  l: "Every 6 Hours"},
+        {v: "q8h",  l: "Every 8 Hours"},
+        {v: "q12h", l: "Every 12 Hours"},
+        {v: "prn",  l: "As Needed (PRN)"},
+        {v: "stat", l: "STAT"}
+    ];
+    const TIMINGS = [
+        {v: "before_meal",   l: "Before Meal"},
+        {v: "after_meal",    l: "After Meal"},
+        {v: "with_meal",     l: "With Meal"},
+        {v: "empty_stomach", l: "Empty Stomach"},
+        {v: "at_bedtime",    l: "At Bedtime"},
+        {v: "morning",       l: "Morning"},
+        {v: "evening",       l: "Evening"},
+        {v: "any_time",      l: "Any Time"}
+    ];
+    const ROUTES = [
+        {v: "oral",       l: "Oral"},
+        {v: "topical",    l: "Topical"},
+        {v: "injection",  l: "Injection"},
+        {v: "inhalation", l: "Inhalation"},
+        {v: "rectal",     l: "Rectal"},
+        {v: "eye",        l: "Eye"},
+        {v: "ear",        l: "Ear"},
+        {v: "nasal",      l: "Nasal"}
+    ];
+    const DOSES = ["½ Tablet","1 Tablet","2 Tablets","1 Capsule","2 Capsules","5 ml","10 ml","15 ml","1 Puff","2 Puffs","1 Drop","2 Drops"];
+    const DURATIONS = ["3 Days","5 Days","7 Days","10 Days","14 Days","1 Month","2 Months","3 Months","Continuous"];
+
+    let readyModalInstance = null;
+    let deleteModalInstance = null;
+    let viewModalInstance = null;
+    let medCounter = 0;
+
+    // Cache for selected medicine objects (id → full data)
+    const SELECTED_MEDS = {};
+
+    function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function getReadyModal() {
+        if (!readyModalInstance) {
+            readyModalInstance = new bootstrap.Modal(document.getElementById('readyModal'));
+        }
+        return readyModalInstance;
+    }
+    function getDeleteModal() {
+        if (!deleteModalInstance) {
+            deleteModalInstance = new bootstrap.Modal(document.getElementById('deleteModal'));
+        }
+        return deleteModalInstance;
+    }
+    function getViewModal() {
+        if (!viewModalInstance) {
+            viewModalInstance = new bootstrap.Modal(document.getElementById('viewModal'));
+        }
+        return viewModalInstance;
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // Combo builder
+    // ═══════════════════════════════════════════════════════════
+    function buildComboHtml(name, label, labelFa, icon, options, currentValue) {
+        const displayValue = (currentValue !== undefined && currentValue !== null) ? currentValue : '';
+        return `
+            <div class="combo-wrap" data-combo-name="${name}">
+                <label class="combo-label">${icon} ${label} <span class="fa">${labelFa}</span></label>
+                <div class="combo-input-wrap">
+                    <input type="text" class="combo-input"
+                           placeholder="Search or type custom..."
+                           value="${escapeHtml(displayValue)}"
+                           autocomplete="off">
+                    <i class="bi bi-chevron-down combo-arrow"></i>
+                </div>
+                <input type="hidden" name="${name}[]" class="combo-hidden" value="${escapeHtml(displayValue)}">
+                <div class="combo-menu"></div>
+            </div>
+        `;
+    }
+
+    function initCombo(container) {
+        const combos = container.querySelectorAll('.combo-wrap');
+        combos.forEach(wrap => {
+            const name = wrap.dataset.comboName;
+            const input = wrap.querySelector('.combo-input');
+            const hidden = wrap.querySelector('.combo-hidden');
+            const menu = wrap.querySelector('.combo-menu');
+
+            let options = [];
+            if (name === 'dose')           options = DOSES.map(d => ({ v: d, l: d }));
+            else if (name === 'frequency') options = FREQUENCIES;
+            else if (name === 'timing')    options = TIMINGS;
+            else if (name === 'route')     options = ROUTES;
+            else if (name === 'duration')  options = DURATIONS.map(d => ({ v: d, l: d }));
+
+            let selectedValue = hidden.value;
+            let highlightedIndex = -1;
+
+            function renderMenu() {
+                const query = input.value.trim().toLowerCase();
+                const matches = options.filter(opt =>
+                    opt.l.toLowerCase().includes(query) || opt.v.toLowerCase().includes(query)
+                );
+                let html = '';
+                if (matches.length === 0) {
+                    html += `<div class="combo-empty"><i class="bi bi-search" style="font-size:24px;opacity:0.4;display:block;margin-bottom:6px;"></i>No matches</div>`;
+                } else {
+                    html += matches.map((opt, idx) => {
+                        const isSelected = opt.v === selectedValue;
+                        const isHighlighted = idx === highlightedIndex;
+                        return `<div class="combo-item ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''}"
+                                     data-value="${escapeHtml(opt.v)}" data-index="${idx}">
+                                    ${escapeHtml(opt.l)}
+                                </div>`;
+                    }).join('');
+                }
+                if (input.value.trim()) {
+                    const exactMatch = options.find(o =>
+                        o.l.toLowerCase() === query || o.v.toLowerCase() === query);
+                    if (!exactMatch) {
+                        html += `<div class="combo-custom-hint" data-custom-value="${escapeHtml(input.value)}">
+                                    <i class="bi bi-pencil-fill"></i>
+                                    Use custom: "<strong>${escapeHtml(input.value)}</strong>"
+                                 </div>`;
+                    }
+                }
+                menu.innerHTML = html;
+                menu.querySelectorAll('.combo-item').forEach(el => {
+                    el.addEventListener('click', () => selectValue(el.dataset.value));
+                });
+                const customHint = menu.querySelector('.combo-custom-hint');
+                if (customHint) {
+                    customHint.addEventListener('click', () =>
+                        selectCustom(customHint.dataset.customValue));
+                }
+            }
+
+            function open() { wrap.classList.add('open'); renderMenu(); }
+            function close() { wrap.classList.remove('open'); highlightedIndex = -1; }
+
+            function selectValue(value) {
+                selectedValue = value;
+                hidden.value = value;
+                const opt = options.find(o => o.v === value);
+                input.value = opt ? opt.l : value;
+                close();
+            }
+            function selectCustom(text) {
+                selectedValue = text;
+                hidden.value = text;
+                input.value = text;
+                close();
+            }
+
+            input.addEventListener('focus', open);
+            input.addEventListener('input', () => {
+                hidden.value = input.value;
+                selectedValue = input.value;
+                highlightedIndex = -1;
+                open();
+            });
+            input.addEventListener('keydown', (e) => {
+                if (!wrap.classList.contains('open')) {
+                    if (e.key === 'ArrowDown' || e.key === 'Enter') { open(); e.preventDefault(); }
+                    return;
+                }
+                const items = menu.querySelectorAll('.combo-item');
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    highlightedIndex = Math.min(highlightedIndex + 1, items.length - 1);
+                    renderMenu();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    highlightedIndex = Math.max(highlightedIndex - 1, -1);
+                    renderMenu();
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (highlightedIndex >= 0 && items[highlightedIndex]) {
+                        selectValue(items[highlightedIndex].dataset.value);
+                    } else {
+                        selectCustom(input.value);
+                    }
+                } else if (e.key === 'Escape') {
+                    close(); input.blur();
+                }
+            });
+            document.addEventListener('click', (e) => {
+                if (!wrap.contains(e.target)) close();
+            });
+            renderMenu();
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // Medicine search dropdown  —  LIVE API search
+    // ═══════════════════════════════════════════════════════════
+    function initMedSearchDropdown(rowElement, onSelect) {
+        const wrap = rowElement.querySelector('.med-search-wrap');
+        const input = wrap.querySelector('.med-search-input');
+        const hidden = wrap.querySelector('.med-search-hidden');
+        const menu = wrap.querySelector('.med-search-menu');
+
+        let selectedId = null;
+        let highlightedIndex = -1;
+        let results = [];
+        let searchTimer = null;
+        let lastQuery = '__INIT__';
+
+        function renderMenu() {
+            if (results.length === 0) {
+                menu.innerHTML = `<div class="sd-empty"><i class="bi bi-search"></i>دارویی یافت نشد</div>`;
+                return;
+            }
+            menu.innerHTML = results.map((item, idx) => {
+                const isSelected = selectedId === item.id;
+                const isHighlighted = idx === highlightedIndex;
+                const initial = (item.name || '?').charAt(0).toUpperCase();
+                const starBadge = item.is_favorite
+                    ? `<span class="fav-star"><i class="bi bi-star-fill"></i></span>`
+                    : '';
+                const starInline = item.is_favorite
+                    ? `<i class="bi bi-star-fill star-inline"></i>`
+                    : '';
+                return `
+                    <div class="sd-item ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''}"
+                         data-id="${item.id}" data-index="${idx}">
+                        <div class="sd-item-avatar">${escapeHtml(initial)}${starBadge}</div>
+                        <div class="sd-item-info">
+                            <div class="sd-item-name">${starInline}${escapeHtml(item.full_name || item.name)}</div>
+                            <div class="sd-item-meta">
+                                ${item.form ? escapeHtml(item.form) : ''}${item.generic_name ? ' • ' + escapeHtml(item.generic_name) : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            menu.querySelectorAll('.sd-item').forEach(el => {
+                el.addEventListener('click', () => selectItem(parseInt(el.dataset.id)));
+            });
+        }
+
+        function showLoading() {
+            menu.innerHTML = `<div class="sd-loading"><i class="bi bi-arrow-clockwise"></i>در حال جستجو...</div>`;
+        }
+
+        function open() { wrap.classList.add('open'); renderMenu(); }
+        function close() { wrap.classList.remove('open'); highlightedIndex = -1; }
+
+        function searchNow(query) {
+            lastQuery = query;
+            showLoading();
+
+            const url = MEDICINE_SEARCH_URL + '?q=' + encodeURIComponent(query);
+            fetch(url)
+                .then(r => r.json())
+                .then(data => {
+                    if (lastQuery !== query) return;
+                    results = data.results || [];
+                    results.forEach(item => { SELECTED_MEDS[item.id] = item; });
+                    highlightedIndex = -1;
+                    renderMenu();
+                })
+                .catch(() => {
+                    if (lastQuery !== query) return;
+                    results = [];
+                    renderMenu();
+                });
+        }
+
+        function filter() {
+            const q = input.value.trim();
+
+            if (!q || (selectedId && input.value === (SELECTED_MEDS[selectedId]?.full_name || ''))) {
+                if (selectedId) return;
+            }
+
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => searchNow(q), 220);
+        }
+
+        function selectItem(id) {
+            let item = SELECTED_MEDS[id];
+            if (!item) item = results.find(m => m.id === id);
+            if (!item) return;
+
+            selectedId = id;
+            hidden.value = id;
+            input.value = item.full_name || item.name;
+            close();
+            rowElement.classList.add('filled');
+            if (typeof onSelect === 'function') onSelect(item);
+        }
+
+        function openWithInitial() {
+            if (results.length === 0 || lastQuery === '__INIT__') {
+                searchNow('');
+            }
+            wrap.classList.add('open');
+        }
+
+        input.addEventListener('focus', openWithInitial);
+        input.addEventListener('input', filter);
+        input.addEventListener('keydown', (e) => {
+            if (!wrap.classList.contains('open')) {
+                if (e.key === 'ArrowDown' || e.key === 'Enter') { openWithInitial(); e.preventDefault(); }
+                return;
+            }
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                highlightedIndex = Math.min(highlightedIndex + 1, Math.min(results.length - 1, 39));
+                renderMenu();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                highlightedIndex = Math.max(highlightedIndex - 1, -1);
+                renderMenu();
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (highlightedIndex >= 0 && results[highlightedIndex]) {
+                    selectItem(results[highlightedIndex].id);
+                }
+            } else if (e.key === 'Escape') {
+                close(); input.blur();
+            }
+        });
+        document.addEventListener('click', (e) => {
+            if (!wrap.contains(e.target)) close();
+        });
+
+        return {
+            selectItem: (id) => {
+                fetch(MEDICINE_SEARCH_URL + '?q=')
+                    .then(r => r.json())
+                    .then(data => {
+                        (data.results || []).forEach(m => { SELECTED_MEDS[m.id] = m; });
+                        selectItem(id);
+                    })
+                    .catch(() => {});
+            }
+        };
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // Medication row builder  —  includes QUANTITY
+    // ═══════════════════════════════════════════════════════════
+    function addMedRow(data) {
+        data = data || {};
+        const container = document.getElementById('medicationsContainer');
+        const idx = medCounter++;
+
+        const row = document.createElement('div');
+        row.className = 'med-item-row';
+        if (data.medication_id) row.classList.add('filled');
+        row.dataset.medIndex = idx;
+
+        const doseDisplay = data.dose || '';
+        const freqDisplay = resolveDisplay(data.frequency, FREQUENCIES);
+        const timingDisplay = resolveDisplay(data.timing, TIMINGS);
+        const routeDisplay = resolveDisplay(data.route || 'oral', ROUTES);
+        const durationDisplay = data.duration || '';
+        const quantityDisplay = data.quantity || '';
+
+        const medName = data.medication_name || (SELECTED_MEDS[data.medication_id]?.full_name) || '';
+
+        row.innerHTML = `
+            <span class="med-num-badge">${container.children.length + 1}</span>
+            <button type="button" class="remove-btn" title="حذف"><i class="bi bi-x-lg"></i></button>
+
+            <div class="med-search-wrap">
+                <label><i class="bi bi-search"></i> Medicine <span class="fa">دوا</span></label>
+                <input type="text" class="med-search-input"
+                       placeholder="جستجو: نام، جنریک، سازنده..."
+                       value="${escapeHtml(medName)}"
+                       autocomplete="off">
+                <i class="bi bi-chevron-down med-search-arrow"></i>
+                <input type="hidden" name="medication[]" class="med-search-hidden"
+                       value="${data.medication_id || ''}">
+                <div class="med-search-menu"></div>
+            </div>
+
+            <div class="med-combos-row">
+                ${buildComboHtml('dose', 'Dose', 'دوز', '<i class="bi bi-123"></i>', DOSES.map(d => ({v: d, l: d})), doseDisplay)}
+                ${buildComboHtml('frequency', 'Frequency', 'دفعات', '<i class="bi bi-clock"></i>', FREQUENCIES, freqDisplay)}
+            </div>
+
+            <div class="med-combos-row">
+                ${buildComboHtml('timing', 'Timing', 'زمان مصرف', '<i class="bi bi-clock-history"></i>', TIMINGS, timingDisplay)}
+                ${buildComboHtml('route', 'Route', 'طریقه مصرف', '<i class="bi bi-capsule"></i>', ROUTES, routeDisplay)}
+            </div>
+
+            <div class="med-combos-row">
+                ${buildComboHtml('duration', 'Duration', 'مدت مصرف', '<i class="bi bi-calendar-range"></i>', DURATIONS.map(d => ({v: d, l: d})), durationDisplay)}
+
+                <!-- ⭐ QUANTITY (n) input -->
+                <div class="med-quantity-wrap">
+                    <label class="combo-label"><i class="bi bi-hash"></i> Quantity (n) <span class="fa">تعداد کل</span></label>
+                    <input type="number"
+                           name="quantity[]"
+                           class="med-quantity-input"
+                           min="1"
+                           placeholder="مثلاً 2"
+                           value="${escapeHtml(quantityDisplay)}"
+                           autocomplete="off">
+                    <div class="med-quantity-hint">تعداد کل از این دوا</div>
+                </div>
+            </div>
+        `;
+
+        container.appendChild(row);
+
+        row.querySelector('.remove-btn').addEventListener('click', () => {
+            row.remove();
+            renumberMeds();
+        });
+
+        initCombo(row);
+
+        function setComboValue(fieldName, value) {
+            const wrap = row.querySelector(`.combo-wrap[data-combo-name="${fieldName}"]`);
+            if (!wrap) return;
+            const input = wrap.querySelector('.combo-input');
+            const hidden = wrap.querySelector('.combo-hidden');
+            let options = [];
+            if (fieldName === 'dose')           options = DOSES.map(d => ({ v: d, l: d }));
+            else if (fieldName === 'frequency') options = FREQUENCIES;
+            else if (fieldName === 'timing')    options = TIMINGS;
+            else if (fieldName === 'route')     options = ROUTES;
+            else if (fieldName === 'duration')  options = DURATIONS.map(d => ({ v: d, l: d }));
+            const opt = options.find(o => o.v === value);
+            input.value = opt ? opt.l : value;
+            hidden.value = value;
+        }
+
+        const searchApi = initMedSearchDropdown(row, (med) => {
+            if (med.default_dose)      setComboValue('dose', med.default_dose);
+            if (med.default_frequency) setComboValue('frequency', med.default_frequency);
+            if (med.default_timing)    setComboValue('timing', med.default_timing);
+            if (med.default_route)     setComboValue('route', med.default_route);
+            if (med.default_duration)  setComboValue('duration', med.default_duration);
+        });
+
+        if (data.medication_id) {
+            setTimeout(() => {
+                if (data.medication_name) {
+                    SELECTED_MEDS[data.medication_id] = {
+                        id: data.medication_id,
+                        name: data.medication_name,
+                        full_name: data.medication_name,
+                        generic_name: data.medication_generic || '',
+                        form: data.medication_form || '',
+                        is_favorite: data.medication_favorite || false,
+                    };
+                }
+                searchApi.selectItem(parseInt(data.medication_id));
+            }, 60);
+        }
+    }
+
+    function resolveDisplay(value, options) {
+        if (!value) return '';
+        const opt = options.find(o => o.v === value);
+        return opt ? opt.l : value;
+    }
+
+    function renumberMeds() {
+        const container = document.getElementById('medicationsContainer');
+        Array.from(container.children).forEach((row, i) => {
+            const num = row.querySelector('.med-num-badge');
+            if (num) num.textContent = i + 1;
+        });
+    }
+
+    function clearMeds() {
+        document.getElementById('medicationsContainer').innerHTML = '';
+        medCounter = 0;
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // Errors
+    // ═══════════════════════════════════════════════════════════
+    function showError(text) {
+        const box = document.getElementById('readyErrorBox');
+        const txt = document.getElementById('readyErrorText');
+        if (!text) { box.classList.remove('show'); txt.textContent = ''; return; }
+        txt.textContent = text;
+        box.classList.add('show');
+        box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    function hideError() { showError(''); }
+
+    // ═══════════════════════════════════════════════════════════
+    // Create modal
+    // ═══════════════════════════════════════════════════════════
+    function openCreateModal() {
+        const form = document.getElementById('readyForm');
+        form.reset();
+
+        document.getElementById('formAction').value = 'create';
+        document.getElementById('formReadyId').value = '';
+        document.getElementById('modalTitle').innerHTML = '<i class="bi bi-plus-circle-fill"></i> نسخه آماده جدید';
+        document.getElementById('submitBtn').innerHTML = '<i class="bi bi-check-lg"></i> ذخیره';
+
+        document.getElementById('id_is_active').checked = true;
+        document.getElementById('id_is_favorite').checked = false;
+
+        hideError();
+        clearMeds();
+        addMedRow();
+
+        getReadyModal().show();
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // Edit modal
+    // ═══════════════════════════════════════════════════════════
+    function editReady(id) {
+        const url = READY_API_URL.replace('999999', id);
+
+        hideError();
+
+        fetch(url)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) { alert('خطا در بارگذاری'); return; }
+                const rp = data.ready;
+
+                document.getElementById('formAction').value = 'update';
+                document.getElementById('formReadyId').value = rp.id;
+                document.getElementById('modalTitle').innerHTML = '<i class="bi bi-pencil-fill"></i> ویرایش نسخه آماده';
+                document.getElementById('submitBtn').innerHTML = '<i class="bi bi-check-lg"></i> بروزرسانی';
+
+                document.querySelector('[name="title"]').value = rp.title || '';
+                document.querySelector('[name="signs_symptoms"]').value = rp.signs_symptoms || '';
+                document.querySelector('[name="diagnosis"]').value = rp.diagnosis || '';
+                document.querySelector('[name="impression"]').value = rp.impression || '';
+                document.querySelector('[name="doctor_note"]').value = rp.doctor_note || '';
+                document.querySelector('[name="advice"]').value = rp.advice || '';
+
+                document.getElementById('id_is_active').checked = !!rp.is_active;
+                document.getElementById('id_is_favorite').checked = !!rp.is_favorite;
+
+                clearMeds();
+                if (rp.medications && rp.medications.length > 0) {
+                    rp.medications.forEach(med => addMedRow({
+                        medication_id: med.medication_id,
+                        medication_name: med.drug_name || '',
+                        medication_generic: med.drug_generic_name || '',
+                        medication_form: med.drug_form || '',
+                        dose: med.dose || '',
+                        frequency: med.frequency || '',
+                        timing: med.timing || '',
+                        route: med.route || 'oral',
+                        duration: med.duration || '',
+                        quantity: med.quantity || '',
+                    }));
+                } else {
+                    addMedRow();
+                }
+
+                getReadyModal().show();
+            })
+            .catch(err => { console.error(err); alert('خطای شبکه'); });
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // View details modal  —  FULL DETAILS + BILINGUAL + QUANTITY
+    // ═══════════════════════════════════════════════════════════
+    function viewReady(id) {
+        const url = READY_API_URL.replace('999999', id);
+        const body = document.getElementById('viewModalBody');
+
+        body.innerHTML = `
+            <div style="text-align:center;padding:40px;">
+                <i class="bi bi-hourglass-split" style="font-size:36px;color:#7c3aed;"></i>
+                <p style="margin-top:12px;color:#6b7280;">در حال بارگذاری...</p>
+            </div>
+        `;
+
+        getViewModal().show();
+
+        fetch(url)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) {
+                    body.innerHTML = '<p style="text-align:center;color:#dc2626;">خطا در بارگذاری</p>';
+                    return;
+                }
+                const rp = data.ready;
+
+                // ═══ Medicine cards — full detail with quantity ═══
+                let medsHtml = `
+                    <div style="text-align:center;padding:30px;color:#cbd5e1;">
+                        <i class="bi bi-capsule" style="font-size:32px;display:block;margin-bottom:8px;opacity:0.5;"></i>
+                        <p style="margin:0;font-style:italic;">No Medications — بدون دوا</p>
+                    </div>
+                `;
+
+                if (rp.medications && rp.medications.length > 0) {
+                    medsHtml = rp.medications.map((med, i) => {
+                        const drugName = med.drug_name || 'Medicine #' + (i + 1);
+                        const metaParts = [];
+                        if (med.drug_generic_name) metaParts.push(med.drug_generic_name);
+                        if (med.drug_form) metaParts.push(med.drug_form);
+                        if (med.drug_manufacturer) metaParts.push(med.drug_manufacturer);
+
+                        let chips = '';
+                        // ⭐ quantity badge FIRST (most visually striking)
+                        if (med.quantity) {
+                            chips += `<span class="rv-chip quantity"><i class="bi bi-hash"></i> <strong>Quantity — تعداد:</strong>&nbsp;n=${escapeHtml(String(med.quantity))}</span>`;
+                        }
+                        if (med.dose)
+                            chips += `<span class="rv-chip dose"><i class="bi bi-123"></i> <strong>Dose — دوز:</strong>&nbsp;${escapeHtml(med.dose)}</span>`;
+                        if (med.frequency_display || med.frequency)
+                            chips += `<span class="rv-chip freq"><i class="bi bi-clock"></i> <strong>Frequency — دفعات:</strong>&nbsp;${escapeHtml(med.frequency_display || med.frequency)}</span>`;
+                        if (med.timing_display || med.timing)
+                            chips += `<span class="rv-chip timing"><i class="bi bi-clock-history"></i> <strong>Timing — زمان مصرف:</strong>&nbsp;${escapeHtml(med.timing_display || med.timing)}</span>`;
+                        if (med.route_display || med.route)
+                            chips += `<span class="rv-chip route"><i class="bi bi-capsule"></i> <strong>Route — طریقه مصرف:</strong>&nbsp;${escapeHtml(med.route_display || med.route)}</span>`;
+                        if (med.duration)
+                            chips += `<span class="rv-chip duration"><i class="bi bi-calendar-range"></i> <strong>Duration — مدت:</strong>&nbsp;${escapeHtml(med.duration)}</span>`;
+
+                        if (!chips) {
+                            chips = `<span class="rv-chip empty">No details — بدون مشخصات</span>`;
+                        }
+
+                        return `
+                            <div class="rv-med-card">
+                                <span class="rv-med-card-num">${i + 1}</span>
+                                <div class="rv-med-card-header">
+                                    <div>
+                                        <h4 class="rv-med-card-name">${escapeHtml(drugName)}</h4>
+                                        ${metaParts.length ? `<div class="rv-med-card-sub">${escapeHtml(metaParts.join(' • '))}</div>` : ''}
+                                    </div>
+                                </div>
+                                <div class="rv-med-card-chips">${chips}</div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+
+                // ═══ Assemble full modal ═══
+                body.innerHTML = `
+                    <div class="rv-hero">
+                        <div class="rv-hero-content">
+                            <h2 class="rv-hero-title">${escapeHtml(rp.title)}</h2>
+                            <div class="rv-hero-stats">
+                                <div class="rv-hero-stat">
+                                    <i class="bi bi-capsule"></i>
+                                    ${(rp.medications || []).length} Medications — دوا
+                                </div>
+                                ${rp.diagnosis ? `
+                                    <div class="rv-hero-stat">
+                                        <i class="bi bi-clipboard2-check-fill"></i>
+                                        Diagnosis — تشخیص
+                                    </div>
+                                ` : ''}
+                                ${rp.signs_symptoms ? `
+                                    <div class="rv-hero-stat">
+                                        <i class="bi bi-chat-left-text-fill"></i>
+                                        Signs & Symptoms — علائم
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rv-section">
+                        <div class="rv-section-title">
+                            <span class="rv-section-icon"><i class="bi bi-capsule"></i></span>
+                            <span>Medications <span style="color:#94a3b8;font-weight:600;font-size:12.5px;margin-right:6px;">— لیست دواها</span></span>
+                            <span style="margin-right:auto;font-size:12.5px;color:#94a3b8;font-weight:700;">
+                                ${(rp.medications || []).length} items
+                            </span>
+                        </div>
+                        ${medsHtml}
+                    </div>
+
+                    <div class="rv-section">
+                        <div class="rv-section-title">
+                            <span class="rv-section-icon"><i class="bi bi-chat-left-text-fill"></i></span>
+                            <span>Signs &amp; Symptoms <span style="color:#94a3b8;font-weight:600;font-size:12.5px;margin-right:6px;">— علائم و نشانه‌ها</span></span>
+                        </div>
+                        <div class="rv-text ${rp.signs_symptoms ? '' : 'empty'}">
+                            ${rp.signs_symptoms ? escapeHtml(rp.signs_symptoms) : 'Not recorded — ثبت نشده'}
+                        </div>
+                    </div>
+
+                    <div class="rv-section">
+                        <div class="rv-section-title">
+                            <span class="rv-section-icon"><i class="bi bi-clipboard2-check-fill"></i></span>
+                            <span>Diagnosis <span style="color:#94a3b8;font-weight:600;font-size:12.5px;margin-right:6px;">— تشخیص</span></span>
+                        </div>
+                        <div class="rv-text ${rp.diagnosis ? '' : 'empty'}">
+                            ${rp.diagnosis ? escapeHtml(rp.diagnosis) : 'Not recorded — ثبت نشده'}
+                        </div>
+                    </div>
+
+                    <div class="rv-section">
+                        <div class="rv-section-title">
+                            <span class="rv-section-icon"><i class="bi bi-chat-square-quote-fill"></i></span>
+                            <span>Impression <span style="color:#94a3b8;font-weight:600;font-size:12.5px;margin-right:6px;">— برداشت بالینی</span></span>
+                        </div>
+                        <div class="rv-text ${rp.impression ? '' : 'empty'}">
+                            ${rp.impression ? escapeHtml(rp.impression) : 'Not recorded — ثبت نشده'}
+                        </div>
+                    </div>
+
+                    <div class="rv-section">
+                        <div class="rv-section-title">
+                            <span class="rv-section-icon"><i class="bi bi-sticky-fill"></i></span>
+                            <span>Doctor Note <span style="color:#94a3b8;font-weight:600;font-size:12.5px;margin-right:6px;">— یادداشت داکتر</span></span>
+                        </div>
+                        <div class="rv-text ${rp.doctor_note ? '' : 'empty'}">
+                            ${rp.doctor_note ? escapeHtml(rp.doctor_note) : 'Not recorded — ثبت نشده'}
+                        </div>
+                    </div>
+
+                    <div class="rv-section">
+                        <div class="rv-section-title">
+                            <span class="rv-section-icon"><i class="bi bi-clipboard-check-fill"></i></span>
+                            <span>Advice <span style="color:#94a3b8;font-weight:600;font-size:12.5px;margin-right:6px;">— توصیه‌ها</span></span>
+                        </div>
+                        <div class="rv-text ${rp.advice ? '' : 'empty'}">
+                            ${rp.advice ? escapeHtml(rp.advice) : 'Not recorded — ثبت نشده'}
+                        </div>
+                    </div>
+                `;
+            })
+            .catch(err => {
+                console.error(err);
+                body.innerHTML = '<p style="text-align:center;color:#dc2626;">خطای شبکه</p>';
+            });
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // Delete
+    // ═══════════════════════════════════════════════════════════
+    function confirmDelete(id, title) {
+        document.getElementById('deleteReadyId').value = id;
+        document.getElementById('deleteReadyTitle').textContent = title;
+        getDeleteModal().show();
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // Submit validation
+    // ═══════════════════════════════════════════════════════════
+    document.getElementById('readyForm').addEventListener('submit', function(e) {
+        const title = document.querySelector('[name="title"]').value.trim();
+        if (!title) { e.preventDefault(); showError('عنوان الزامی است'); return; }
+        hideError();
+    });
+
+    // ═══════════════════════════════════════════════════════════
+    // Init
+    // ═══════════════════════════════════════════════════════════
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if open_modal == 'create' %}
+            openCreateModal();
+            {% if form %}
+                document.querySelector('[name="title"]').value = "{{ form.title.value|default:''|escapejs }}";
+                document.querySelector('[name="signs_symptoms"]').value = "{{ form.signs_symptoms.value|default:''|escapejs }}";
+                document.querySelector('[name="diagnosis"]').value = "{{ form.diagnosis.value|default:''|escapejs }}";
+                document.querySelector('[name="impression"]').value = "{{ form.impression.value|default:''|escapejs }}";
+                document.querySelector('[name="doctor_note"]').value = "{{ form.doctor_note.value|default:''|escapejs }}";
+                document.querySelector('[name="advice"]').value = "{{ form.advice.value|default:''|escapejs }}";
+            {% endif %}
+            {% if modal_error %} showError("{{ modal_error|escapejs }}"); {% endif %}
+        {% endif %}
+
+        {% if open_modal == 'update' and edit_ready %}
+            document.getElementById('formAction').value = 'update';
+            document.getElementById('formReadyId').value = '{{ edit_ready.id }}';
+            document.getElementById('modalTitle').innerHTML = '<i class="bi bi-pencil-fill"></i> ویرایش نسخه آماده';
+            document.getElementById('submitBtn').innerHTML = '<i class="bi bi-check-lg"></i> بروزرسانی';
+            {% if form %}
+                document.querySelector('[name="title"]').value = "{{ form.title.value|default:''|escapejs }}";
+                document.querySelector('[name="signs_symptoms"]').value = "{{ form.signs_symptoms.value|default:''|escapejs }}";
+                document.querySelector('[name="diagnosis"]').value = "{{ form.diagnosis.value|default:''|escapejs }}";
+                document.querySelector('[name="impression"]').value = "{{ form.impression.value|default:''|escapejs }}";
+                document.querySelector('[name="doctor_note"]').value = "{{ form.doctor_note.value|default:''|escapejs }}";
+                document.querySelector('[name="advice"]').value = "{{ form.advice.value|default:''|escapejs }}";
+            {% endif %}
+            {% if modal_error %} showError("{{ modal_error|escapejs }}"); {% endif %}
+            getReadyModal().show();
+        {% endif %}
+    });
+</script>
+{% endblock %}

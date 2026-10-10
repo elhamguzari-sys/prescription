@@ -1,0 +1,1005 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ═══════════════════════════════════════════════════════════
+       Page header
+       ═══════════════════════════════════════════════════════════ */
+    .ph-header {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 22px; flex-wrap: wrap; gap: 12px;
+    }
+    .ph-header h1 {
+        margin: 0 0 4px; font-size: 26px; font-weight: 800;
+        color: #0f172a; display: flex; align-items: center; gap: 10px;
+    }
+    .ph-header h1 i { color: #dc2626; }
+    .ph-header p { margin: 0; font-size: 14px; color: #6b7280; }
+
+    /* ═══════════════════════════════════════════════════════════
+       Search box
+       ═══════════════════════════════════════════════════════════ */
+    .ph-search {
+        background: white; border-radius: 16px;
+        padding: 22px 24px;
+        margin-bottom: 22px;
+        box-shadow: 0 3px 14px rgba(0,0,0,0.05);
+        border: 1.5px solid #e5e7eb;
+    }
+    .ph-search-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr 1fr auto;
+        gap: 12px;
+        align-items: end;
+    }
+    .ph-field label {
+        display: block; font-size: 12.5px;
+        font-weight: 700; color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.4px; margin-bottom: 7px;
+    }
+    .ph-field input {
+        width: 100%; padding: 11px 14px;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 10px;
+        font-size: 14px; font-family: inherit;
+        background: #f9fafb; box-sizing: border-box;
+        transition: all 0.2s;
+    }
+    .ph-field input:focus {
+        outline: none; border-color: #dc2626;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(220,38,38,0.10);
+    }
+
+    .ph-search-btn {
+        padding: 11px 26px;
+        background: linear-gradient(135deg, #dc2626, #991b1b);
+        color: white; border: none;
+        border-radius: 10px; font-size: 14px;
+        font-weight: 800; cursor: pointer;
+        font-family: inherit;
+        display: inline-flex; align-items: center; gap: 7px;
+        box-shadow: 0 6px 16px rgba(220,38,38,0.28);
+        transition: all 0.2s;
+        height: 42px;
+        white-space: nowrap;
+    }
+    .ph-search-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 22px rgba(220,38,38,0.38);
+    }
+
+    .ph-clear-btn {
+        padding: 11px 20px;
+        background: #f3f4f6;
+        color: #475569;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 800;
+        cursor: pointer;
+        font-family: inherit;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        text-decoration: none;
+        transition: all 0.2s;
+        height: 42px;
+        white-space: nowrap;
+    }
+    .ph-clear-btn:hover {
+        background: #fee2e2;
+        border-color: #fca5a5;
+        color: #991b1b;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       Results count
+       ═══════════════════════════════════════════════════════════ */
+    .ph-results-count {
+        font-size: 14px; color: #475569;
+        margin-bottom: 14px; font-weight: 600;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .ph-results-count i { color: #dc2626; font-size: 16px; }
+    .ph-results-count b {
+        color: #0f172a; font-weight: 900; font-size: 16px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       Patient block
+       ═══════════════════════════════════════════════════════════ */
+    .ph-patient-block {
+        background: white;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 16px;
+        margin-bottom: 14px;
+        overflow: hidden;
+        transition: all 0.2s;
+        box-shadow: 0 3px 12px rgba(0,0,0,0.04);
+    }
+    .ph-patient-block.expanded {
+        border-color: #dc2626;
+        box-shadow: 0 10px 30px rgba(220,38,38,0.12);
+    }
+
+    .ph-row {
+        display: flex; align-items: center;
+        gap: 16px; padding: 18px 22px;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+    .ph-row:hover { background: #fef2f2; }
+
+    .ph-avatar {
+        width: 52px; height: 52px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #dc2626, #991b1b);
+        color: white;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 900; font-size: 20px;
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(220,38,38,0.25);
+    }
+    .ph-avatar.female {
+        background: linear-gradient(135deg, #db2777, #9d174d);
+        box-shadow: 0 4px 12px rgba(219,39,119,0.25);
+    }
+
+    .ph-info { flex: 1; min-width: 0; }
+    .ph-name {
+        font-size: 16px; font-weight: 800;
+        color: #0f172a; margin-bottom: 5px;
+    }
+    .ph-meta {
+        font-size: 13px; color: #6b7280;
+        display: flex; gap: 14px; flex-wrap: wrap;
+        font-weight: 500;
+    }
+    .ph-meta span {
+        display: inline-flex; align-items: center; gap: 4px;
+    }
+
+    .ph-count {
+        font-size: 13px; font-weight: 700;
+        color: #991b1b; background: #fee2e2;
+        padding: 6px 12px; border-radius: 10px;
+        display: inline-flex; align-items: center; gap: 6px;
+        white-space: nowrap;
+    }
+    .ph-count b { font-size: 15px; }
+
+    .ph-toggle {
+        width: 36px; height: 36px;
+        border-radius: 10px;
+        background: #f3f4f6; color: #475569;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 16px; flex-shrink: 0;
+        transition: all 0.25s ease;
+    }
+    .ph-patient-block.expanded .ph-toggle {
+        background: linear-gradient(135deg, #dc2626, #991b1b);
+        color: white;
+        transform: rotate(180deg);
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       Prescriptions container
+       ═══════════════════════════════════════════════════════════ */
+    .ph-rx-container {
+        display: none;
+        background: #f9fafb;
+        border-top: 1.5px dashed #e5e7eb;
+        padding: 14px 22px 18px;
+    }
+    .ph-patient-block.expanded .ph-rx-container { display: block; }
+
+    .ph-loading {
+        padding: 24px;
+        text-align: center;
+        color: #94a3b8;
+        font-size: 13.5px;
+        display: flex; align-items: center; justify-content: center;
+        gap: 10px; font-weight: 600;
+    }
+    .ph-loading::before {
+        content: '';
+        width: 16px; height: 16px;
+        border: 2.5px solid #e5e7eb;
+        border-top-color: #dc2626;
+        border-radius: 50%;
+        animation: ph-spin 0.7s linear infinite;
+    }
+    @keyframes ph-spin { to { transform: rotate(360deg); } }
+
+    /* Rx item */
+    .ph-rx-item {
+        background: white;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 12px;
+        margin-bottom: 10px;
+        overflow: hidden;
+        transition: all 0.2s;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+    .ph-rx-item:last-child { margin-bottom: 0; }
+    .ph-rx-item.expanded {
+        border-color: #dc2626;
+        box-shadow: 0 6px 18px rgba(220,38,38,0.10);
+    }
+
+    .ph-rx-row {
+        display: flex; align-items: center;
+        gap: 14px; padding: 14px 18px;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+    .ph-rx-row:hover { background: #fef2f2; }
+
+    .ph-rx-date {
+        font-size: 14.5px; font-weight: 800;
+        color: #0f172a; min-width: 110px;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .ph-rx-date i { color: #dc2626; font-size: 15px; }
+    .ph-rx-badge {
+        font-size: 11px; font-weight: 900;
+        padding: 3px 9px; border-radius: 7px;
+        background: linear-gradient(135deg, #059669, #047857);
+        color: white;
+        letter-spacing: 0.3px;
+    }
+    .ph-rx-no {
+        font-size: 12.5px;
+        font-family: monospace;
+        font-weight: 800;
+        color: #dc2626;
+        background: #fef2f2;
+        padding: 4px 10px;
+        border-radius: 7px;
+    }
+    .ph-rx-items-count {
+        font-size: 12.5px; color: #6b7280;
+        font-weight: 700; margin-right: auto;
+        display: inline-flex; align-items: center; gap: 5px;
+    }
+    .ph-rx-items-count i { color: #7c3aed; }
+
+    .ph-rx-toggle {
+        width: 28px; height: 28px;
+        border-radius: 8px;
+        background: #f3f4f6; color: #475569;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 13px; flex-shrink: 0;
+        transition: all 0.25s ease;
+    }
+    .ph-rx-item.expanded .ph-rx-toggle {
+        background: linear-gradient(135deg, #dc2626, #991b1b);
+        color: white;
+        transform: rotate(180deg);
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       Prescription details
+       ═══════════════════════════════════════════════════════════ */
+    .ph-rx-details {
+        display: none;
+        padding: 20px 22px;
+        border-top: 1.5px dashed #e5e7eb;
+        background: #fafafa;
+    }
+    .ph-rx-item.expanded .ph-rx-details { display: block; }
+
+    .ph-detail-section {
+        margin-bottom: 20px;
+    }
+    .ph-detail-section:last-child { margin-bottom: 0; }
+
+    .ph-detail-title {
+        font-size: 12px; font-weight: 900;
+        color: #dc2626;
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+        margin-bottom: 12px;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .ph-detail-title i { font-size: 14px; }
+    .ph-detail-title::after {
+        content: ''; flex: 1; height: 1px;
+        background: linear-gradient(to left, transparent, #fca5a5);
+    }
+
+    /* Field rows */
+    .ph-dfield {
+        padding: 11px 14px;
+        background: white;
+        border: 1.5px solid #f1f5f9;
+        border-radius: 10px;
+        margin-bottom: 8px;
+        display: grid;
+        grid-template-columns: 140px 1fr;
+        gap: 16px;
+        font-size: 14px;
+        align-items: start;
+    }
+    .ph-dfield:last-child { margin-bottom: 0; }
+    .ph-dfield-lbl {
+        color: #64748b; font-weight: 700;
+        display: flex; align-items: center; gap: 6px;
+    }
+    .ph-dfield-lbl i { color: #dc2626; font-size: 14px; }
+    .ph-dfield-val {
+        color: #0f172a; line-height: 1.75;
+        font-weight: 500; white-space: pre-line;
+        word-break: break-word;
+    }
+    .ph-dfield-val.empty {
+        color: #cbd5e1; font-style: italic; font-weight: 400;
+    }
+
+    /* Vitals */
+    .ph-vitals {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 8px;
+    }
+    .ph-vital {
+        text-align: center;
+        padding: 12px 6px;
+        background: linear-gradient(135deg, #fef2f2, #ffffff);
+        border: 1.5px solid #fecaca;
+        border-radius: 10px;
+    }
+    .ph-vital-lbl {
+        font-size: 10.5px; font-weight: 900;
+        color: #991b1b; text-transform: uppercase;
+        letter-spacing: 0.5px; margin-bottom: 5px;
+    }
+    .ph-vital-val {
+        font-size: 16px; font-weight: 900;
+        color: #0f172a;
+    }
+    .ph-vital-val.empty {
+        color: #cbd5e1; font-weight: 400;
+    }
+
+    /* Medicines */
+    .ph-meds-wrapper {
+        border: 1.5px solid #e5e7eb;
+        border-radius: 12px;
+        overflow: hidden;
+        background: white;
+    }
+    .ph-med {
+        padding: 14px 18px;
+        border-bottom: 1.5px solid #f3f4f6;
+    }
+    .ph-med:last-child { border-bottom: none; }
+
+    .ph-med-head {
+        display: flex; align-items: baseline;
+        gap: 10px; flex-wrap: wrap;
+        margin-bottom: 6px;
+    }
+    .ph-med-num {
+        font-weight: 900; color: #dc2626;
+        font-size: 15px;
+    }
+    .ph-med-name {
+        font-weight: 800; color: #0f172a;
+        font-size: 15.5px;
+    }
+    .ph-med-strength {
+        font-size: 14px; color: #334155;
+        font-weight: 700;
+    }
+    /* ⭐ NEW — quantity badge next to medicine name */
+    .ph-med-qty-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1.5px solid #dc2626;
+        font-weight: 900;
+        font-size: 12px;
+        padding: 3px 10px;
+        border-radius: 20px;
+        direction: ltr;
+        letter-spacing: 0.3px;
+    }
+    .ph-med-mfr {
+        margin-right: auto;
+        font-size: 12px; color: #94a3b8;
+        font-weight: 500;
+    }
+
+    .ph-med-meta {
+        font-size: 13px; color: #64748b;
+        margin-bottom: 10px;
+        display: flex; gap: 14px; flex-wrap: wrap;
+        font-weight: 500;
+    }
+    .ph-med-meta .gen { color: #475569; font-weight: 600; }
+    .ph-med-meta .brand { color: #7c3aed; font-style: italic; }
+
+    .ph-med-specs {
+        display: flex; flex-wrap: wrap; gap: 6px;
+    }
+    .ph-spec {
+        font-size: 12.5px; font-weight: 700;
+        color: #991b1b;
+        background: linear-gradient(135deg, #fef2f2, #fee2e2);
+        border: 1.5px solid #fecaca;
+        padding: 5px 12px;
+        border-radius: 20px;
+        display: inline-flex; align-items: center; gap: 5px;
+    }
+    .ph-spec i { font-size: 11px; opacity: 0.7; }
+
+    /* ⭐ NEW — quantity chip (used in the specs row fallback) */
+    .ph-spec.qty {
+        background: #fee2e2;
+        color: #991b1b;
+        border-color: #dc2626;
+        font-weight: 900;
+    }
+
+    /* Advice */
+    .ph-advice {
+        background: linear-gradient(135deg, #fffbeb, #fef3c7);
+        border: 1.5px solid #fcd34d;
+        border-radius: 12px;
+        padding: 14px 18px;
+    }
+    .ph-advice-item {
+        font-size: 14px; color: #78350f;
+        font-weight: 600; line-height: 1.7;
+        padding: 5px 0;
+        display: flex; align-items: flex-start; gap: 10px;
+    }
+    .ph-advice-item i {
+        color: #d97706;
+        margin-top: 5px; flex-shrink: 0;
+        font-size: 12px;
+    }
+
+    /* Rx actions */
+    .ph-rx-actions {
+        display: flex; gap: 8px;
+        margin-top: 18px;
+        padding-top: 16px;
+        border-top: 1.5px dashed #e5e7eb;
+    }
+    .ph-rx-action {
+        padding: 8px 16px;
+        border-radius: 9px;
+        font-size: 13px; font-weight: 800;
+        text-decoration: none;
+        display: inline-flex; align-items: center; gap: 6px;
+        transition: all 0.15s;
+    }
+    .ph-rx-action.print {
+        background: linear-gradient(135deg, #dc2626, #991b1b);
+        color: white;
+        box-shadow: 0 4px 12px rgba(220,38,38,0.25);
+    }
+    .ph-rx-action.print:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 18px rgba(220,38,38,0.35);
+        color: white;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       Empty states
+       ═══════════════════════════════════════════════════════════ */
+    .ph-empty {
+        text-align: center;
+        padding: 80px 20px;
+        color: #94a3b8;
+        background: white;
+        border-radius: 16px;
+        border: 1.5px solid #e5e7eb;
+        box-shadow: 0 3px 12px rgba(0,0,0,0.04);
+    }
+    .ph-empty i {
+        font-size: 64px; display: block;
+        margin-bottom: 16px; opacity: 0.35;
+        color: #dc2626;
+    }
+    .ph-empty p {
+        font-size: 15px; margin: 0;
+        font-weight: 700; color: #475569;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       Pagination
+       ═══════════════════════════════════════════════════════════ */
+    .ph-pagination {
+        display: flex; justify-content: center;
+        gap: 6px; margin-top: 20px;
+    }
+    .ph-pagination a, .ph-pagination span {
+        min-width: 40px; height: 40px;
+        padding: 0 12px; border-radius: 10px;
+        display: inline-flex; align-items: center;
+        justify-content: center;
+        font-weight: 800; font-size: 13.5px;
+        text-decoration: none;
+        transition: all 0.15s;
+    }
+    .ph-pagination a {
+        background: white; color: #dc2626;
+        border: 1.5px solid #e5e7eb;
+    }
+    .ph-pagination a:hover {
+        background: #fee2e2;
+        border-color: #fca5a5;
+    }
+    .ph-pagination span.active {
+        background: linear-gradient(135deg, #dc2626, #991b1b);
+        color: white; border: 1.5px solid #dc2626;
+        box-shadow: 0 6px 16px rgba(220,38,38,0.28);
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       Responsive
+       ═══════════════════════════════════════════════════════════ */
+    @media (max-width: 900px) {
+        .ph-search-grid { grid-template-columns: 1fr 1fr; }
+        .ph-vitals { grid-template-columns: repeat(4, 1fr); }
+    }
+    @media (max-width: 600px) {
+        .ph-search-grid { grid-template-columns: 1fr; }
+        .ph-row { flex-wrap: wrap; }
+        .ph-vitals { grid-template-columns: repeat(2, 1fr); }
+        .ph-dfield { grid-template-columns: 1fr; gap: 4px; }
+        .ph-rx-row { flex-wrap: wrap; }
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<!-- ═══ Header ═══ -->
+<div class="ph-header">
+    <div>
+        <h1>
+            <i class="bi bi-clock-history"></i>
+            {{ page_title }}
+        </h1>
+        <p>برای دیدن تاریخچه، مشخصات مریض را وارد کنید</p>
+    </div>
+</div>
+
+
+<!-- ═══ Search ═══ -->
+<form method="get" class="ph-search">
+    <div class="ph-search-grid">
+        <div class="ph-field">
+            <label>نام</label>
+            <input type="text" name="first_name" value="{{ first_name }}" placeholder="نام مریض">
+        </div>
+        <div class="ph-field">
+            <label>تخلص</label>
+            <input type="text" name="last_name" value="{{ last_name }}" placeholder="تخلص مریض">
+        </div>
+        <div class="ph-field">
+            <label>نام پدر</label>
+            <input type="text" name="father_name" value="{{ father_name }}" placeholder="نام پدر">
+        </div>
+        <div class="ph-field">
+            <label>سن</label>
+            <input type="number" name="age" value="{{ age }}" placeholder="سن" min="0">
+        </div>
+        <div class="ph-field">
+            <label>شماره تماس</label>
+            <input type="text" name="phone" value="{{ phone }}" placeholder="شماره تماس">
+        </div>
+        <div class="ph-field" style="display:flex; gap:8px; align-items:end;">
+            <button type="submit" class="ph-search-btn">
+                <i class="bi bi-search"></i> جستجو
+            </button>
+
+            {% if has_filters %}
+            <a href="{% url 'patient_history_list' %}" class="ph-clear-btn">
+                <i class="bi bi-x-lg"></i> پاک کردن
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</form>
+
+
+<!-- ═══ Results ═══ -->
+{% if has_filters %}
+
+    {% if patients %}
+
+    <div class="ph-results-count">
+        <i class="bi bi-people-fill"></i>
+        نتایج: <b>{{ total_found }}</b> مریض یافت شد
+    </div>
+
+    {% for p in patients %}
+    <div class="ph-patient-block" data-patient-id="{{ p.id }}">
+
+        <!-- Level 1: Patient row -->
+        <div class="ph-row" onclick="togglePatient(this)">
+            <div class="ph-avatar {% if p.gender == 'F' %}female{% endif %}">
+                {{ p.first_name|first|upper }}
+            </div>
+
+            <div class="ph-info">
+                <div class="ph-name">
+                    {{ p.full_name }}{% if p.father_name %} — ولد {{ p.father_name }}{% endif %}
+                </div>
+                <div class="ph-meta">
+                    {% if p.age %}<span><i class="bi bi-calendar-fill"></i> {{ p.age }} ساله</span>{% endif %}
+                    {% if p.gender %}<span><i class="bi bi-person-fill"></i> {{ p.get_gender_display }}</span>{% endif %}
+                    {% if p.phone %}<span><i class="bi bi-telephone-fill"></i> {{ p.phone }}</span>{% endif %}
+                </div>
+            </div>
+
+            <div class="ph-count">
+                <b>{{ p.rx_count }}</b> نسخه
+            </div>
+
+            <div class="ph-toggle">
+                <i class="bi bi-chevron-down"></i>
+            </div>
+        </div>
+
+        <!-- Level 2 container: prescriptions (lazy loaded) -->
+        <div class="ph-rx-container">
+            <div class="ph-loading">در حال بارگذاری...</div>
+        </div>
+
+    </div>
+    {% endfor %}
+
+    <!-- ═══ Pagination ═══ -->
+    {% if patients.has_other_pages %}
+    <div class="ph-pagination">
+        {% if patients.has_previous %}
+        <a href="?page={{ patients.previous_page_number }}&first_name={{ first_name }}&last_name={{ last_name }}&father_name={{ father_name }}&age={{ age }}&phone={{ phone }}">
+            <i class="bi bi-chevron-right"></i>
+        </a>
+        {% endif %}
+
+        {% for num in patients.paginator.page_range %}
+            {% if patients.number == num %}
+                <span class="active">{{ num }}</span>
+            {% elif num > patients.number|add:-3 and num < patients.number|add:3 %}
+                <a href="?page={{ num }}&first_name={{ first_name }}&last_name={{ last_name }}&father_name={{ father_name }}&age={{ age }}&phone={{ phone }}">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if patients.has_next %}
+        <a href="?page={{ patients.next_page_number }}&first_name={{ first_name }}&last_name={{ last_name }}&father_name={{ father_name }}&age={{ age }}&phone={{ phone }}">
+            <i class="bi bi-chevron-left"></i>
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+
+    <div class="ph-empty">
+        <i class="bi bi-search"></i>
+        <p>هیچ مریضی با این مشخصات یافت نشد</p>
+    </div>
+
+    {% endif %}
+
+{% endif %}
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+"use strict";
+
+// ═══════════════════════════════════════════════════════════════════
+// Base URL — from the current page path (no url tag dependency)
+// ═══════════════════════════════════════════════════════════════════
+var BASE_URL = "{{ request.path }}";
+
+function urlPatientPrescriptions(id) {
+    return BASE_URL + "api/patient/" + id + "/prescriptions/";
+}
+function urlPrescriptionDetail(id) {
+    return BASE_URL + "api/prescription/" + id + "/";
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Print URL — from the prescripts app's URL name
+// ═══════════════════════════════════════════════════════════════════
+var URL_PRINT_RX = "{% url 'prescription_print_page' 0 %}";
+
+function urlPrintRx(id) {
+    return URL_PRINT_RX.replace('/0/', '/' + id + '/');
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
+// Toggle patient
+// ═══════════════════════════════════════════════════════════════════
+window.togglePatient = function(row) {
+    var block = row.closest('.ph-patient-block');
+    var isExpanded = block.classList.contains('expanded');
+
+    if (isExpanded) {
+        block.classList.remove('expanded');
+        return;
+    }
+
+    block.classList.add('expanded');
+
+    var container = block.querySelector('.ph-rx-container');
+    if (!container.dataset.loaded) {
+        var patientId = block.dataset.patientId;
+        loadPrescriptions(patientId, container);
+        container.dataset.loaded = '1';
+    }
+};
+
+
+function loadPrescriptions(patientId, container) {
+    var url = urlPatientPrescriptions(patientId);
+
+    fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(function(r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        })
+        .then(function(data) {
+            if (!data.success) {
+                container.innerHTML = '<div class="ph-loading" style="color:#dc2626;">خطا در بارگذاری</div>';
+                return;
+            }
+
+            if (data.prescriptions.length === 0) {
+                container.innerHTML = '<div class="ph-loading" style="color:#94a3b8;">هیچ نسخه‌ای یافت نشد</div>';
+                return;
+            }
+
+            var html = '';
+            data.prescriptions.forEach(function(rx) {
+                html += renderRxItem(rx);
+            });
+            container.innerHTML = html;
+        })
+        .catch(function(err) {
+            console.error('loadPrescriptions error:', err);
+            container.innerHTML = '<div class="ph-loading" style="color:#dc2626;">خطای شبکه: ' + err.message + '</div>';
+        });
+}
+
+
+function renderRxItem(rx) {
+    var badge = rx.is_today ? '<span class="ph-rx-badge">امروز</span>' : '';
+
+    return ''
+        + '<div class="ph-rx-item" data-rx-id="' + rx.id + '">'
+        +   '<div class="ph-rx-row" onclick="togglePrescription(this)">'
+        +     '<div class="ph-rx-date"><i class="bi bi-calendar3"></i> ' + rx.date + '</div>'
+        +     badge
+        +     '<div class="ph-rx-no">' + rx.number + '</div>'
+        +     '<div class="ph-rx-items-count"><i class="bi bi-capsule"></i> ' + rx.items_count + ' دوا</div>'
+        +     '<div class="ph-rx-toggle"><i class="bi bi-chevron-down"></i></div>'
+        +   '</div>'
+        +   '<div class="ph-rx-details"><div class="ph-loading">در حال بارگذاری...</div></div>'
+        + '</div>';
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
+// Toggle prescription
+// ═══════════════════════════════════════════════════════════════════
+window.togglePrescription = function(row) {
+    var item = row.closest('.ph-rx-item');
+    var isExpanded = item.classList.contains('expanded');
+
+    if (isExpanded) {
+        item.classList.remove('expanded');
+        return;
+    }
+
+    item.classList.add('expanded');
+
+    var details = item.querySelector('.ph-rx-details');
+    if (!details.dataset.loaded) {
+        var rxId = item.dataset.rxId;
+        loadPrescriptionDetails(rxId, details);
+        details.dataset.loaded = '1';
+    }
+};
+
+
+function loadPrescriptionDetails(rxId, container) {
+    var url = urlPrescriptionDetail(rxId);
+
+    fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(function(r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        })
+        .then(function(data) {
+            if (!data.success) {
+                container.innerHTML = '<div class="ph-loading" style="color:#dc2626;">خطا در بارگذاری</div>';
+                return;
+            }
+            container.innerHTML = renderRxDetails(data.prescription);
+        })
+        .catch(function(err) {
+            console.error('loadPrescriptionDetails error:', err);
+            container.innerHTML = '<div class="ph-loading" style="color:#dc2626;">خطای شبکه: ' + err.message + '</div>';
+        });
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
+// Render full prescription details
+// ═══════════════════════════════════════════════════════════════════
+function renderRxDetails(rx) {
+    var html = '';
+
+    // ─── Clinical ───
+    if (rx.signs_symptoms || rx.diagnosis || rx.impression || rx.doctor_note) {
+        html += '<div class="ph-detail-section">';
+        html += '<div class="ph-detail-title"><i class="bi bi-clipboard2-pulse-fill"></i> اطلاعات بالینی</div>';
+        html += renderField('علائم و نشانه‌ها', 'bi-journal-text', rx.signs_symptoms);
+        html += renderField('تشخیص', 'bi-clipboard2-check-fill', rx.diagnosis);
+        html += renderField('برداشت بالینی', 'bi-chat-square-quote-fill', rx.impression);
+        html += renderField('یادداشت داکتر', 'bi-sticky-fill', rx.doctor_note);
+        html += '</div>';
+    }
+
+    // ─── Vitals ───
+    if (rx.blood_pressure || rx.pulse || rx.respiratory_rate || rx.temperature || rx.spo2 || rx.weight || rx.height) {
+        html += '<div class="ph-detail-section">';
+        html += '<div class="ph-detail-title"><i class="bi bi-heart-pulse-fill"></i> علائم حیاتی</div>';
+        html += '<div class="ph-vitals">';
+        html += vital('BP', rx.blood_pressure);
+        html += vital('Pulse', rx.pulse);
+        html += vital('RR', rx.respiratory_rate);
+        html += vital('Temp', rx.temperature);
+        html += vital('SpO₂', rx.spo2);
+        html += vital('Weight', rx.weight);
+        html += vital('Height', rx.height);
+        html += '</div>';
+        html += '</div>';
+    }
+
+    // ─── Medicines ───
+    if (rx.items && rx.items.length > 0) {
+        html += '<div class="ph-detail-section">';
+        html += '<div class="ph-detail-title"><i class="bi bi-capsule"></i> دواها (' + rx.items_count + ')</div>';
+        html += '<div class="ph-meds-wrapper">';
+        rx.items.forEach(function(it) {
+            html += renderMed(it);
+        });
+        html += '</div>';
+        html += '</div>';
+    }
+
+    // ─── Advice ───
+    if (rx.advice_items && rx.advice_items.length > 0) {
+        html += '<div class="ph-detail-section">';
+        html += '<div class="ph-detail-title"><i class="bi bi-chat-left-text-fill"></i> توصیه‌ها</div>';
+        html += '<div class="ph-advice">';
+        rx.advice_items.forEach(function(a) {
+            html += '<div class="ph-advice-item"><i class="bi bi-check-circle-fill"></i> ' + escapeHtml(a) + '</div>';
+        });
+        html += '</div>';
+        html += '</div>';
+    }
+
+    // ─── Actions: ONLY Print ───
+    html += '<div class="ph-rx-actions">';
+    html += '<a href="' + urlPrintRx(rx.id) + '" class="ph-rx-action print" target="_blank">'
+          + '<i class="bi bi-printer-fill"></i> چاپ</a>';
+    html += '</div>';
+
+    return html;
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
+// Small helpers
+// ═══════════════════════════════════════════════════════════════════
+function renderField(label, icon, value) {
+    var valClass = value ? '' : ' empty';
+    var valText = value ? escapeHtml(value) : '—';
+
+    return '<div class="ph-dfield">'
+         + '<div class="ph-dfield-lbl"><i class="bi ' + icon + '"></i> ' + label + '</div>'
+         + '<div class="ph-dfield-val' + valClass + '">' + valText + '</div>'
+         + '</div>';
+}
+
+function vital(label, value) {
+    var valClass = value ? '' : ' empty';
+    var valText = value ? escapeHtml(value) : '—';
+
+    return '<div class="ph-vital">'
+         + '<div class="ph-vital-lbl">' + label + '</div>'
+         + '<div class="ph-vital-val' + valClass + '">' + valText + '</div>'
+         + '</div>';
+}
+
+function renderMed(it) {
+    var html = '<div class="ph-med">';
+
+    // ⭐ Head — number + name + strength + QUANTITY badge + manufacturer
+    html += '<div class="ph-med-head">';
+    html += '<span class="ph-med-num">' + it.number + '.</span>';
+
+    if (it.medication_name) {
+        html += '<span class="ph-med-name">' + escapeHtml(it.medication_name) + '</span>';
+    }
+    if (it.strength) {
+        html += '<span class="ph-med-strength">' + escapeHtml(it.strength) + '</span>';
+    }
+
+    // ⭐ Quantity badge — right after name/strength
+    if (it.quantity) {
+        html += '<span class="ph-med-qty-badge"><i class="bi bi-hash"></i>n=' + escapeHtml(String(it.quantity)) + '</span>';
+    }
+
+    if (it.manufacturer) {
+        html += '<span class="ph-med-mfr">' + escapeHtml(it.manufacturer) + '</span>';
+    }
+    html += '</div>';
+
+    // Meta
+    if (it.generic_name || it.form) {
+        html += '<div class="ph-med-meta">';
+        if (it.generic_name) {
+            html += '<span class="gen"><i class="bi bi-capsule-pill"></i> ' + escapeHtml(it.generic_name) + '</span>';
+        }
+        if (it.form) {
+            html += '<span><i class="bi bi-box-seam"></i> ' + escapeHtml(it.form) + '</span>';
+        }
+        html += '</div>';
+    }
+
+    // Pills
+    var specs = [];
+    // ⭐ Quantity chip in specs — for reinforcement
+    if (it.quantity)          specs.push(['bi-hash',            'تعداد: n=' + it.quantity, 'qty']);
+    if (it.dose)              specs.push(['bi-123',            'دوز: ' + it.dose, '']);
+    if (it.frequency_display) specs.push(['bi-clock',          'دفعات: ' + it.frequency_display, '']);
+    if (it.timing_display)    specs.push(['bi-clock-history',  'زمان: ' + it.timing_display, '']);
+    if (it.route_display)     specs.push(['bi-signpost-split', 'طریقه: ' + it.route_display, '']);
+    if (it.duration)          specs.push(['bi-calendar-range', 'مدت: ' + it.duration, '']);
+
+    if (specs.length > 0) {
+        html += '<div class="ph-med-specs">';
+        specs.forEach(function(s) {
+            var extraClass = s[2] ? ' ' + s[2] : '';
+            html += '<span class="ph-spec' + extraClass + '"><i class="bi ' + s[0] + '"></i> ' + escapeHtml(s[1]) + '</span>';
+        });
+        html += '</div>';
+    }
+
+    html += '</div>';
+    return html;
+}
+
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+</script>
+{% endblock %}

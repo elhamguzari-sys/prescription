@@ -1,0 +1,53 @@
+/* ============================================================
+   فونت‌های پروژه — ۴ فونت
+   ============================================================ */
+
+/* ✅ وزیرمتن — فارسی + انگلیسی */
+@font-face {
+    font-family: 'Vazirmatn';
+    src: url('../fonts/Vazirmatn-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Vazirmatn';
+    src: url('../fonts/Vazirmatn-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* ✅ پرستو — فارسی + انگلیسی */
+@font-face {
+    font-family: 'Parastoo';
+    src: url('../fonts/Parastoo.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Parastoo';
+    src: url('../fonts/Parastoo-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* ✅ Arial — فقط انگلیسی */
+@font-face {
+    font-family: 'Arial';
+    src: url('../fonts/ARIAL.TTF') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* ✅ Tahoma — فارسی + انگلیسی */
+@font-face {
+    font-family: 'Tahoma';
+    src: url('../fonts/TAHOMA.TTF') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}

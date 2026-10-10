@@ -1,0 +1,928 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ============================================================
+       Page header
+       ============================================================ */
+    .page-header h1      { font-size: 30px; }
+    .page-header p       { font-size: 15px; }
+
+    .filter-bar input,
+    .filter-bar select,
+    .filter-bar button,
+    .filter-bar a         { font-size: 15px; padding: 12px 16px; }
+
+    /* ============================================================
+       Table
+       ============================================================ */
+    .table                 { font-size: 15px; }
+    .table thead th        { font-size: 14.5px; padding: 16px 14px; }
+    .table tbody td        { font-size: 14.5px; padding: 15px 14px; }
+
+    .med-name              { font-size: 15.5px; font-weight: 700; }
+    .med-sub               { font-size: 13px; }
+
+    /* ============================================================
+       Avatar
+       ============================================================ */
+    .avatar                { width: 46px; height: 46px; font-size: 17px; }
+
+    /* ============================================================
+       Form badges
+       ============================================================ */
+    .badge-form            {
+        font-size: 13px; padding: 6px 14px; border-radius: 20px;
+        font-weight: 700; display: inline-flex; align-items: center; gap: 5px;
+    }
+    .badge-form.tablet      { background: #dbeafe; color: #1e3a8a; border: 1.5px solid #93c5fd; }
+    .badge-form.capsule     { background: #ede9fe; color: #5b21b6; border: 1.5px solid #c4b5fd; }
+    .badge-form.syrup       { background: #fce7f3; color: #831843; border: 1.5px solid #f9a8d4; }
+    .badge-form.suspension  { background: #fef3c7; color: #78350f; border: 1.5px solid #fcd34d; }
+    .badge-form.injection   { background: #fee2e2; color: #991b1b; border: 1.5px solid #fca5a5; }
+    .badge-form.drops       { background: #d1fae5; color: #065f46; border: 1.5px solid #6ee7b7; }
+    .badge-form.ointment    { background: #e0f2fe; color: #075985; border: 1.5px solid #7dd3fc; }
+    .badge-form.cream       { background: #fae8ff; color: #86198f; border: 1.5px solid #e9d5ff; }
+    .badge-form.gel         { background: #ccfbf1; color: #115e59; border: 1.5px solid #5eead4; }
+    .badge-form.spray       { background: #e0e7ff; color: #3730a3; border: 1.5px solid #a5b4fc; }
+    .badge-form.inhaler     { background: #cffafe; color: #155e75; border: 1.5px solid #67e8f9; }
+    .badge-form.suppository { background: #ffedd5; color: #9a3412; border: 1.5px solid #fdba74; }
+    .badge-form.powder      { background: #f1f5f9; color: #334155; border: 1.5px solid #cbd5e1; }
+    .badge-form.other       { background: #f3f4f6; color: #4b5563; border: 1.5px solid #d1d5db; }
+
+    /* ============================================================
+       Strength badge
+       ============================================================ */
+    .badge-strength {
+        display: inline-block;
+        font-family: 'Courier New', monospace;
+        font-size: 13.5px;
+        font-weight: 700;
+        background: #f0fdf4;
+        color: #166534;
+        border: 1.5px solid #86efac;
+        padding: 4px 10px;
+        border-radius: 8px;
+    }
+
+    /* ============================================================
+       Status badges
+       ============================================================ */
+    .badge-status         { font-size: 12.5px; padding: 5px 12px; border-radius: 10px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px; }
+    .badge-status.active  { background: #dcfce7; color: #166534; border: 1.5px solid #86efac; }
+    .badge-status.inactive { background: #fee2e2; color: #991b1b; border: 1.5px solid #fca5a5; }
+
+    /* ============================================================
+       Action buttons
+       ============================================================ */
+    .action-btn            { width: 38px; height: 38px; font-size: 15px; }
+    .action-btn.btn-view   { background: #dbeafe; color: #1e40af; }
+    .action-btn.btn-view:hover { background: #2563eb; color: white; }
+
+    /* ============================================================
+       Responsive table
+       ============================================================ */
+    @media (max-width: 768px) {
+        .table thead { display: none; }
+        .table,
+        .table tbody,
+        .table tr,
+        .table td { display: block; width: 100%; }
+
+        .table tr {
+            background: white;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 14px;
+            margin-bottom: 14px;
+            padding: 14px 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+        }
+
+        .table td {
+            border: none;
+            padding: 8px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            text-align: left;
+            font-size: 14.5px;
+        }
+
+        .table td::before {
+            content: attr(data-label);
+            font-weight: 700;
+            color: #6b7280;
+            font-size: 13px;
+            min-width: 90px;
+        }
+
+        .table td[data-label="دوا"] {
+            padding-bottom: 12px;
+            margin-bottom: 8px;
+            border-bottom: 1.5px dashed #e5e7eb;
+            font-size: 16px;
+        }
+        .table td[data-label="دوا"]::before { display: none; }
+
+        .table td[data-label="عملیات"] {
+            justify-content: flex-end;
+            padding-top: 10px;
+            margin-top: 8px;
+            border-top: 1.5px dashed #e5e7eb;
+        }
+        .table td[data-label="عملیات"]::before { display: none; }
+
+        .table td[data-label="#"] { display: none; }
+    }
+
+    /* ============================================================
+       Modal labels
+       ============================================================ */
+    .modal-body .form-label { font-size: 14.5px; }
+    .modal-body .form-control,
+    .modal-body .form-select { font-size: 15px; padding: 12px 14px; }
+
+    .errorlist { font-size: 13.5px; }
+
+    /* ============================================================
+       Optional badge
+       ============================================================ */
+    .optional-badge {
+        font-size: 11.5px;
+        color: #6b7280;
+        background: #f3f4f6;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        padding: 1px 7px;
+        margin-right: 6px;
+        font-weight: 500;
+    }
+
+    /* ============================================================
+       View Details modal
+       ============================================================ */
+    .mv-hero {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        border-radius: 14px;
+        padding: 22px 24px;
+        margin-bottom: 16px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+    .mv-hero::before {
+        content: '';
+        position: absolute;
+        top: -40px; right: -40px;
+        width: 140px; height: 140px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 50%;
+    }
+    .mv-hero-content { position: relative; z-index: 1; }
+    .mv-hero-title {
+        font-size: 24px;
+        font-weight: 800;
+        margin: 0 0 6px;
+        line-height: 1.3;
+    }
+    .mv-hero-sub {
+        font-size: 14px;
+        opacity: 0.9;
+        font-weight: 600;
+    }
+
+    .mv-section {
+        background: white;
+        border-radius: 12px;
+        padding: 18px 20px;
+        margin-bottom: 14px;
+        border: 1.5px solid #e5e7eb;
+    }
+    .mv-section-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 14px;
+        font-weight: 800;
+        color: #059669;
+        margin-bottom: 14px;
+        padding-bottom: 12px;
+        border-bottom: 1.5px dashed #d1fae5;
+    }
+    .mv-section-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 9px;
+        background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+        color: #065f46;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        flex-shrink: 0;
+    }
+
+    .mv-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 10px 0;
+        border-bottom: 1px dashed #f1f5f9;
+    }
+    .mv-row:last-child { border-bottom: none; }
+    .mv-row-lbl {
+        font-size: 13.5px;
+        font-weight: 700;
+        color: #64748b;
+        flex-shrink: 0;
+        min-width: 140px;
+    }
+    .mv-row-lbl .en {
+        font-family: 'Arial', sans-serif;
+        color: #94a3b8;
+        font-size: 12px;
+        font-weight: 600;
+        display: block;
+        margin-top: 2px;
+    }
+    .mv-row-val {
+        font-size: 15px;
+        font-weight: 600;
+        color: #0f172a;
+        text-align: left;
+        flex: 1;
+        word-break: break-word;
+    }
+    .mv-row-val.empty { color: #cbd5e1; font-style: italic; font-weight: 500; }
+
+    .mv-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 700;
+    }
+    .mv-chip.dose      { background: #eff6ff; color: #1d4ed8; border: 1.5px solid #bfdbfe; }
+    .mv-chip.freq      { background: #fef3c7; color: #92400e; border: 1.5px solid #fcd34d; }
+    .mv-chip.timing    { background: #dcfce7; color: #166534; border: 1.5px solid #86efac; }
+    .mv-chip.route     { background: #fce7f3; color: #9d174d; border: 1.5px solid #fbcfe8; }
+    .mv-chip.duration  { background: #ede9fe; color: #5b21b6; border: 1.5px solid #c4b5fd; }
+
+    .mv-chips-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 4px;
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1><i class="bi bi-capsule"></i> {{ page_title }}</h1>
+        <p>بانک دواها — مدیریت دواهای کلینیک</p>
+    </div>
+    <button class="btn-add" data-bs-toggle="modal" data-bs-target="#medicationModal" onclick="resetForm()">
+        <i class="bi bi-plus-circle-fill"></i>
+        افزودن دوا
+    </button>
+</div>
+
+<div class="card-box">
+
+    <!-- Filter -->
+    <form method="get" class="filter-bar">
+        <input type="text" name="search" value="{{ search_query }}"
+               placeholder="🔍 جستجو: نام دوا، نام جنریک، شرکت...">
+        <select name="form">
+            <option value="">همه اشکال</option>
+            {% for value, label in form_choices %}
+            <option value="{{ value }}" {% if form_filter == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn-search">
+            <i class="bi bi-search"></i> جستجو
+        </button>
+        {% if search_query or form_filter %}
+            <a href="{% url 'medication_list' %}" class="btn-reset">
+                <i class="bi bi-x-circle"></i> پاک کردن
+            </a>
+        {% endif %}
+    </form>
+
+    <!-- Table -->
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>دوا</th>
+                    <th>شکل</th>
+                    <th>قدرت</th>
+                    <th>شرکت سازنده</th>
+                    <th>وضعیت</th>
+                    <th>عملیات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for med in medications %}
+                <tr>
+                    <td data-label="#">{{ forloop.counter0|add:medications.start_index }}</td>
+
+                    <td data-label="دوا">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="avatar {% if med.is_favorite %}avatar-female{% else %}avatar-male{% endif %}">
+                                {{ med.name|first|upper }}
+                            </div>
+                            <div>
+                                <div class="med-name">
+                                    {{ med.name }}
+                                    {% if med.is_favorite %}
+                                        <i class="bi bi-star-fill text-warning" title="پرکاربرد"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="med-sub text-muted">
+                                    {% if med.generic_name %}{{ med.generic_name }}{% else %}—{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+
+                    <td data-label="شکل">
+                        <span class="badge-form {{ med.form }}">
+                            <i class="bi bi-capsule"></i> {{ med.get_form_display }}
+                        </span>
+                    </td>
+
+                    <td data-label="قدرت">
+                        {% if med.strength %}
+                            <span class="badge-strength">{{ med.strength }}{{ med.unit }}</span>
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+
+                    <td data-label="شرکت سازنده">
+                        {% if med.manufacturer %}
+                            {{ med.manufacturer }}
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+
+                    <td data-label="وضعیت">
+                        {% if med.is_active %}
+                            <span class="badge-status active">
+                                <i class="bi bi-check-circle-fill"></i> فعال
+                            </span>
+                        {% else %}
+                            <span class="badge-status inactive">
+                                <i class="bi bi-x-circle-fill"></i> غیرفعال
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <td data-label="عملیات">
+                        <button class="action-btn btn-view"
+                                onclick="viewMedication({{ med.id }})"
+                                title="مشاهده جزئیات">
+                            <i class="bi bi-eye-fill"></i>
+                        </button>
+
+                        <button class="action-btn btn-edit"
+                                onclick="editMedication({{ med.id }})"
+                                title="ویرایش">
+                            <i class="bi bi-pencil-fill"></i>
+                        </button>
+
+                        <button class="action-btn btn-delete"
+                                onclick="confirmDelete({{ med.id }}, '{{ med.full_name|escapejs }}')"
+                                title="حذف">
+                            <i class="bi bi-trash-fill"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <i class="bi bi-capsule"></i>
+                            <p>هیچ دوایی یافت نشد</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if medications.has_other_pages %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if medications.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ medications.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if form_filter %}&form={{ form_filter }}{% endif %}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            {% endif %}
+
+            {% for num in medications.paginator.page_range %}
+                {% if medications.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > medications.number|add:-3 and num < medications.number|add:3 %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if form_filter %}&form={{ form_filter }}{% endif %}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if medications.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ medications.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if form_filter %}&form={{ form_filter }}{% endif %}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+</div>
+
+
+<!-- ============ MODAL: ثبت / ویرایش ============ -->
+<div class="modal fade" id="medicationModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" id="medicationForm" action="{% url 'medication_list' %}" novalidate>
+                {% csrf_token %}
+
+                <input type="hidden" name="action" id="formAction" value="create">
+                <input type="hidden" name="medication_id" id="formMedicationId" value="">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">
+                        <i class="bi bi-plus-circle-fill"></i> افزودن دوا
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+
+                    {% if modal_error %}
+                    <div class="alert alert-danger" style="font-size:14.5px; line-height:1.9;">
+                        <i class="bi bi-exclamation-triangle-fill"></i> {{ modal_error }}
+                    </div>
+                    {% endif %}
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                نام دوا
+                                <span class="optional-badge">Medicine Name</span>
+                            </label>
+                            {{ form.name }}
+                            {{ form.name.errors }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                نام جنریک
+                                <span class="optional-badge">Generic Name</span>
+                            </label>
+                            {{ form.generic_name }}
+                            {{ form.generic_name.errors }}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                شکل دوا
+                                <span class="optional-badge">Form</span>
+                            </label>
+                            {{ form.form }}
+                            {{ form.form.errors }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                شرکت سازنده
+                                <span class="optional-badge">Manufacturer</span>
+                            </label>
+                            {{ form.manufacturer }}
+                            {{ form.manufacturer.errors }}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                قدرت
+                                <span class="optional-badge">Strength</span>
+                            </label>
+                            {{ form.strength }}
+                            {{ form.strength.errors }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                واحد
+                                <span class="optional-badge">Unit</span>
+                            </label>
+                            {{ form.unit }}
+                            {{ form.unit.errors }}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                دوز پیش‌فرض
+                                <span class="optional-badge">Default Dose</span>
+                            </label>
+                            {{ form.default_dose }}
+                            {{ form.default_dose.errors }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                دفعات پیش‌فرض
+                                <span class="optional-badge">Default Frequency</span>
+                            </label>
+                            {{ form.default_frequency }}
+                            {{ form.default_frequency.errors }}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                زمان مصرف پیش‌فرض
+                                <span class="optional-badge">Default Timing</span>
+                            </label>
+                            {{ form.default_timing }}
+                            {{ form.default_timing.errors }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                طریقه مصرف پیش‌فرض
+                                <span class="optional-badge">Default Route</span>
+                            </label>
+                            {{ form.default_route }}
+                            {{ form.default_route.errors }}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                مدت پیش‌فرض
+                                <span class="optional-badge">Default Duration</span>
+                            </label>
+                            {{ form.default_duration }}
+                            {{ form.default_duration.errors }}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label" style="display: flex; align-items: center; gap: 10px; margin-top: 30px;">
+                                {{ form.is_active }}
+                                <span>فعال است (Active)</span>
+                            </label>
+                            {{ form.is_active.errors }}
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label" style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+                                {{ form.is_favorite }}
+                                <span>★ دوا پرکاربرد (Favorite)</span>
+                            </label>
+                            {{ form.is_favorite.errors }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary-custom" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg"></i> لغو
+                    </button>
+                    <button type="submit" class="btn btn-primary-custom text-white" id="submitBtn">
+                        <i class="bi bi-check-lg"></i> ذخیره
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- ============ MODAL: مشاهده جزئیات ============ -->
+<div class="modal fade" id="viewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 18px; border: none; overflow: hidden;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #059669, #047857); color: white; padding: 20px 24px; border: none;">
+                <h5 class="modal-title" style="font-weight: 800; font-size: 19px; margin: 0; display: flex; align-items: center; gap: 10px;">
+                    <i class="bi bi-eye-fill"></i>
+                    جزئیات دوا
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body" id="viewModalBody" style="padding: 24px; background: #f9fafb; max-height: 75vh; overflow-y: auto;">
+                <div style="text-align:center;padding:40px;">
+                    <i class="bi bi-hourglass-split" style="font-size:36px;color:#059669;"></i>
+                    <p style="margin-top:12px;color:#6b7280;">در حال بارگذاری...</p>
+                </div>
+            </div>
+
+            <div class="modal-footer" style="background: white; border-top: 1.5px solid #e5e7eb; padding: 14px 24px; display: flex; justify-content: flex-end;">
+                <button type="button" class="btn btn-secondary-custom" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg"></i> بستن
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ============ MODAL: تایید حذف ============ -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 460px;">
+        <div class="modal-content">
+            <form method="post" id="deleteForm" action="{% url 'medication_list' %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="medication_id" id="deleteMedicationId" value="">
+
+                <div class="modal-body text-center p-4" style="padding: 40px 30px 20px !important;">
+                    <div style="
+                        width: 90px; height: 90px;
+                        margin: 0 auto 20px;
+                        border-radius: 50%;
+                        background: #fee2e2;
+                        display: flex; align-items: center; justify-content: center;
+                        font-size: 44px;
+                        color: #dc2626;
+                    ">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                    </div>
+
+                    <h4 class="fw-bold mb-3" style="font-size: 22px;">تایید حذف</h4>
+
+                    <p class="text-muted mb-0" style="font-size: 15.5px; line-height: 1.9;">
+                        آیا مطمئن هستید که می‌خواهید دوا
+                        <br>
+                        <strong id="deleteMedicationName" class="text-dark" style="font-size: 17px;"></strong>
+                        <br>
+                        را حذف کنید؟
+                    </p>
+                </div>
+
+                <div class="modal-footer justify-content-center" style="padding: 10px 24px 26px; gap: 12px; border: none;">
+                    <button type="button" class="btn btn-secondary-custom" data-bs-dismiss="modal"
+                            style="padding: 11px 26px; font-size: 15px;">
+                        لغو
+                    </button>
+                    <button type="submit" class="btn btn-danger"
+                            style="border-radius: 11px; padding: 11px 26px; font-weight: 600; font-size: 15px;">
+                        <i class="bi bi-trash-fill"></i> بله، حذف کن
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+    const MEDICATION_DETAIL_URL = "{% url 'api_medication_detail' 999999 %}";
+
+    // ═══════════════════════════════════════════════════════════
+    // Helpers
+    // ═══════════════════════════════════════════════════════════
+    function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function valOrDash(v) {
+        if (v === null || v === undefined || v === '' || v === 'None') {
+            return '<span class="mv-row-val empty">— ثبت نشده</span>';
+        }
+        return `<span class="mv-row-val">${escapeHtml(v)}</span>`;
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // RESET FORM
+    // ═══════════════════════════════════════════════════════════
+    function resetForm() {
+        const form = document.getElementById('medicationForm');
+        form.reset();
+        document.getElementById('formAction').value = 'create';
+        document.getElementById('formMedicationId').value = '';
+        document.getElementById('modalTitle').innerHTML = '<i class="bi bi-plus-circle-fill"></i> افزودن دوا';
+        document.getElementById('submitBtn').innerHTML = '<i class="bi bi-check-lg"></i> ذخیره';
+
+        const activeCb = document.getElementById('id_is_active');
+        if (activeCb) activeCb.checked = true;
+
+        const favCb = document.getElementById('id_is_favorite');
+        if (favCb) favCb.checked = false;
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // EDIT
+    // ═══════════════════════════════════════════════════════════
+    function editMedication(id) {
+        const url = MEDICATION_DETAIL_URL.replace('999999', id);
+
+        fetch(url)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) {
+                    alert('خطا در بارگذاری');
+                    return;
+                }
+                const med = data.medication;
+
+                document.querySelector('[name="name"]').value = med.name || '';
+                document.querySelector('[name="generic_name"]').value = med.generic_name || '';
+                document.querySelector('[name="form"]').value = med.form || 'tablet';
+                document.querySelector('[name="strength"]').value = med.strength || '';
+                document.querySelector('[name="unit"]').value = med.unit || 'mg';
+                document.querySelector('[name="manufacturer"]').value = med.manufacturer || '';
+                document.querySelector('[name="default_dose"]').value = med.default_dose || '';
+                document.querySelector('[name="default_frequency"]').value = med.default_frequency || '';
+                document.querySelector('[name="default_timing"]').value = med.default_timing || '';
+                document.querySelector('[name="default_route"]').value = med.default_route || 'oral';
+                document.querySelector('[name="default_duration"]').value = med.default_duration || '';
+
+                const activeCb = document.getElementById('id_is_active');
+                if (activeCb) activeCb.checked = !!med.is_active;
+
+                const favCb = document.getElementById('id_is_favorite');
+                if (favCb) favCb.checked = !!med.is_favorite;
+
+                document.getElementById('formAction').value = 'update';
+                document.getElementById('formMedicationId').value = med.id;
+                document.getElementById('modalTitle').innerHTML = '<i class="bi bi-pencil-fill"></i> ویرایش دوا';
+                document.getElementById('submitBtn').innerHTML = '<i class="bi bi-check-lg"></i> به‌روزرسانی';
+
+                new bootstrap.Modal(document.getElementById('medicationModal')).show();
+            })
+            .catch(err => {
+                console.error(err);
+                alert('خطای شبکه');
+            });
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // VIEW DETAILS
+    // ═══════════════════════════════════════════════════════════
+    function viewMedication(id) {
+        const url = MEDICATION_DETAIL_URL.replace('999999', id);
+        const body = document.getElementById('viewModalBody');
+
+        body.innerHTML = `
+            <div style="text-align:center;padding:40px;">
+                <i class="bi bi-hourglass-split" style="font-size:36px;color:#059669;"></i>
+                <p style="margin-top:12px;color:#6b7280;">در حال بارگذاری...</p>
+            </div>
+        `;
+
+        new bootstrap.Modal(document.getElementById('viewModal')).show();
+
+        fetch(url)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) {
+                    body.innerHTML = '<p style="text-align:center;color:#dc2626;">خطا در بارگذاری</p>';
+                    return;
+                }
+
+                const med = data.medication;
+
+                // Build spec chips
+                const chips = [];
+                if (med.default_dose)     chips.push(`<span class="mv-chip dose"><i class="bi bi-123"></i> Dose: ${escapeHtml(med.default_dose)}</span>`);
+                if (med.default_frequency) chips.push(`<span class="mv-chip freq"><i class="bi bi-clock"></i> Freq: ${escapeHtml(med.default_frequency)}</span>`);
+                if (med.default_timing)   chips.push(`<span class="mv-chip timing"><i class="bi bi-clock-history"></i> Timing: ${escapeHtml(med.default_timing)}</span>`);
+                if (med.default_route)    chips.push(`<span class="mv-chip route"><i class="bi bi-capsule"></i> Route: ${escapeHtml(med.default_route)}</span>`);
+                if (med.default_duration) chips.push(`<span class="mv-chip duration"><i class="bi bi-calendar-range"></i> Duration: ${escapeHtml(med.default_duration)}</span>`);
+
+                const chipsHtml = chips.length
+                    ? `<div class="mv-chips-row">${chips.join('')}</div>`
+                    : '<span class="mv-row-val empty">بدون مقادیر پیش‌فرض</span>';
+
+                body.innerHTML = `
+                    <!-- Hero -->
+                    <div class="mv-hero">
+                        <div class="mv-hero-content">
+                            <h2 class="mv-hero-title">${escapeHtml(med.name)}</h2>
+                            ${med.generic_name ? `<div class="mv-hero-sub">${escapeHtml(med.generic_name)}</div>` : ''}
+                        </div>
+                    </div>
+
+                    <!-- Basic Info -->
+                    <div class="mv-section">
+                        <div class="mv-section-title">
+                            <span class="mv-section-icon"><i class="bi bi-info-circle-fill"></i></span>
+                            اطلاعات اصلی
+                        </div>
+
+                        <div class="mv-row">
+                            <span class="mv-row-lbl">نام دوا<span class="en">Medicine Name</span></span>
+                            ${valOrDash(med.name)}
+                        </div>
+                        <div class="mv-row">
+                            <span class="mv-row-lbl">نام جنریک<span class="en">Generic Name</span></span>
+                            ${valOrDash(med.generic_name)}
+                        </div>
+                        <div class="mv-row">
+                            <span class="mv-row-lbl">شکل دوا<span class="en">Form</span></span>
+                            ${valOrDash(med.form_display || med.form)}
+                        </div>
+                        <div class="mv-row">
+                            <span class="mv-row-lbl">قدرت<span class="en">Strength</span></span>
+                            ${med.strength ? `<span class="badge-strength">${escapeHtml(med.strength)}${escapeHtml(med.unit || '')}</span>` : '<span class="mv-row-val empty">— ثبت نشده</span>'}
+                        </div>
+                        <div class="mv-row">
+                            <span class="mv-row-lbl">واحد<span class="en">Unit</span></span>
+                            ${valOrDash(med.unit)}
+                        </div>
+                        <div class="mv-row">
+                            <span class="mv-row-lbl">شرکت سازنده<span class="en">Manufacturer</span></span>
+                            ${valOrDash(med.manufacturer)}
+                        </div>
+                    </div>
+
+                    <!-- Prescription Defaults -->
+                    <div class="mv-section">
+                        <div class="mv-section-title">
+                            <span class="mv-section-icon"><i class="bi bi-prescription2"></i></span>
+                            مقادیر پیش‌فرض تجویز
+                        </div>
+                        ${chipsHtml}
+                    </div>
+
+                    <!-- Status -->
+                    <div class="mv-section">
+                        <div class="mv-section-title">
+                            <span class="mv-section-icon"><i class="bi bi-toggle-on"></i></span>
+                            وضعیت
+                        </div>
+
+                        <div class="mv-row">
+                            <span class="mv-row-lbl">فعال<span class="en">Active</span></span>
+                            <span class="mv-row-val">
+                                ${med.is_active
+                                    ? '<span class="badge-status active"><i class="bi bi-check-circle-fill"></i> بله</span>'
+                                    : '<span class="badge-status inactive"><i class="bi bi-x-circle-fill"></i> خیر</span>'}
+                            </span>
+                        </div>
+
+                        <div class="mv-row">
+                            <span class="mv-row-lbl">پرکاربرد<span class="en">Favorite</span></span>
+                            <span class="mv-row-val">
+                                ${med.is_favorite
+                                    ? '<span class="badge-status active"><i class="bi bi-star-fill"></i> بله</span>'
+                                    : '<span style="color:#94a3b8;">خیر</span>'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            })
+            .catch(err => {
+                console.error(err);
+                body.innerHTML = '<p style="text-align:center;color:#dc2626;">خطای شبکه</p>';
+            });
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // DELETE
+    // ═══════════════════════════════════════════════════════════
+    function confirmDelete(id, name) {
+        document.getElementById('deleteMedicationId').value = id;
+        document.getElementById('deleteMedicationName').textContent = name;
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // Auto-open modal on server-side errors
+    // ═══════════════════════════════════════════════════════════
+    {% if open_modal == 'create' %}
+        document.getElementById('formAction').value = 'create';
+        new bootstrap.Modal(document.getElementById('medicationModal')).show();
+    {% elif open_modal == 'update' and edit_medication %}
+        document.getElementById('formAction').value = 'update';
+        document.getElementById('formMedicationId').value = {{ edit_medication.id }};
+        document.getElementById('modalTitle').innerHTML = '<i class="bi bi-pencil-fill"></i> ویرایش دوا';
+        document.getElementById('submitBtn').innerHTML = '<i class="bi bi-check-lg"></i> به‌روزرسانی';
+        new bootstrap.Modal(document.getElementById('medicationModal')).show();
+    {% endif %}
+</script>
+{% endblock %}

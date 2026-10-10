@@ -1,0 +1,2675 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ═══════════════════════════════════════════════════════════
+       Page Header
+       ═══════════════════════════════════════════════════════════ */
+    .vl-page-header {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 22px; flex-wrap: wrap; gap: 12px;
+    }
+    .vl-page-header h1 {
+        margin: 0 0 4px; font-size: 26px; font-weight: 800;
+        color: #0f172a; display: flex; align-items: center; gap: 10px;
+    }
+    .vl-page-header p { margin: 0; font-size: 14px; color: #6b7280; }
+
+    .btn-create-vl {
+        background: linear-gradient(135deg, #dc2626, #991b1b);
+        color: white; border: none; padding: 11px 22px;
+        border-radius: 11px; font-weight: 700; font-size: 14px;
+        display: inline-flex; align-items: center; gap: 8px;
+        cursor: pointer; transition: all 0.2s;
+        box-shadow: 0 6px 18px rgba(220,38,38,0.3);
+        font-family: inherit;
+    }
+    .btn-create-vl:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 24px rgba(220,38,38,0.4);
+        color: white;
+    }
+
+    /* ═══ Stats ═══ */
+    .vl-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 12px; margin-bottom: 22px;
+    }
+    .vl-stat-card {
+        background: white; border-radius: 14px; padding: 16px 20px;
+        border: 1.5px solid #e5e7eb; display: flex; align-items: center;
+        gap: 12px; box-shadow: 0 3px 12px rgba(0,0,0,0.04);
+    }
+    .vl-stat-icon {
+        width: 44px; height: 44px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 20px; flex-shrink: 0;
+    }
+    .vl-stat-icon.total { background: #ede9fe; color: #5b21b6; }
+    .vl-stat-icon.today { background: #dcfce7; color: #166534; }
+    .vl-stat-icon.week  { background: #dbeafe; color: #1e40af; }
+    .vl-stat-num { font-size: 22px; font-weight: 800; line-height: 1; color: #0f172a; }
+    .vl-stat-lbl { font-size: 12.5px; color: #6b7280; font-weight: 600; margin-top: 3px; }
+
+    /* ═══ Filter ═══ */
+    .vl-filter-bar {
+        background: white; border-radius: 14px; padding: 16px 20px;
+        margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;
+        box-shadow: 0 3px 12px rgba(0,0,0,0.04);
+    }
+    .vl-filter-bar input,
+    .vl-filter-bar select {
+        border: 1.5px solid #e5e7eb; border-radius: 10px;
+        padding: 10px 14px; font-size: 13.5px; background: #f9fafb;
+        transition: all 0.2s; font-family: inherit;
+    }
+    .vl-filter-bar input:focus,
+    .vl-filter-bar select:focus {
+        outline: none; border-color: #dc2626; background: white;
+        box-shadow: 0 0 0 3px rgba(220,38,38,0.1);
+    }
+    .vl-filter-bar input { flex: 1; min-width: 220px; }
+    .vl-filter-bar select { min-width: 160px; }
+
+    .btn-filter-vl {
+        background: #dc2626; color: white; border: none;
+        padding: 10px 22px; border-radius: 10px; font-weight: 700;
+        font-size: 13.5px; cursor: pointer;
+        display: inline-flex; align-items: center; gap: 6px;
+        font-family: inherit;
+    }
+    .btn-filter-vl:hover { background: #991b1b; }
+
+    .btn-reset-vl {
+        background: #f3f4f6; color: #6b7280;
+        border: 1.5px solid #e5e7eb; padding: 10px 18px;
+        border-radius: 10px; font-weight: 700; font-size: 13.5px;
+        text-decoration: none;
+        display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-reset-vl:hover { background: #e5e7eb; color: #111827; }
+
+    /* ═══ Table ═══ */
+    .vl-table-wrapper {
+        background: white; border-radius: 14px;
+        overflow: hidden; box-shadow: 0 3px 12px rgba(0,0,0,0.04);
+    }
+    .vl-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .vl-table thead {
+        background: #f9fafb; color: #6b7280;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    .vl-table thead th {
+        padding: 14px 12px; text-align: right;
+        font-weight: 700; font-size: 13px; white-space: nowrap;
+    }
+    .vl-table tbody tr {
+        border-bottom: 1px solid #f3f4f6;
+        transition: background 0.15s;
+    }
+    .vl-table tbody tr:hover { background: #fef2f2; }
+    .vl-table tbody td {
+        padding: 14px 12px; vertical-align: middle;
+        text-align: right; font-size: 14px;
+    }
+
+    .vl-avatar {
+        width: 42px; height: 42px; border-radius: 12px;
+        background: linear-gradient(135deg, #dc2626, #991b1b);
+        color: white; display: inline-flex;
+        align-items: center; justify-content: center;
+        font-weight: 800; font-size: 16px; flex-shrink: 0;
+    }
+    .vl-avatar.female { background: linear-gradient(135deg, #db2777, #9d174d); }
+    .vl-patient-cell { display: flex; align-items: center; gap: 12px; }
+    .vl-patient-name { font-size: 14.5px; font-weight: 700; color: #0f172a; margin-bottom: 2px; }
+    .vl-patient-sub  { font-size: 12.5px; color: #6b7280; }
+
+    .vl-number {
+        font-family: monospace; font-size: 13.5px; font-weight: 800;
+        color: #dc2626; background: #fef2f2; padding: 4px 10px;
+        border-radius: 8px; display: inline-block;
+    }
+
+    .vl-badge {
+        display: inline-flex; align-items: center; gap: 4px;
+        padding: 4px 10px; border-radius: 10px;
+        font-size: 12px; font-weight: 700; white-space: nowrap;
+    }
+    .vl-badge.today { background: #d1fae5; color: #065f46; border: 1.5px solid #6ee7b7; }
+    .vl-badge.meds  { background: #ede9fe; color: #5b21b6; border: 1.5px solid #c4b5fd; }
+
+    .vl-actions { display: flex; gap: 4px; justify-content: flex-end; }
+    .vl-action-btn {
+        width: 36px; height: 36px; border-radius: 9px; border: none;
+        cursor: pointer; display: inline-flex;
+        align-items: center; justify-content: center;
+        font-size: 15px; transition: all 0.15s; text-decoration: none;
+    }
+    .vl-action-btn.view { background: #eff6ff; color: #2563eb; }
+    .vl-action-btn.view:hover { background: #2563eb; color: white; }
+
+    .vl-action-btn.edit { background: #fef3c7; color: #92400e; }
+    .vl-action-btn.edit:hover { background: #f59e0b; color: white; }
+
+    .vl-action-btn.print { background: #eef2ff; color: #4f46e5; }
+    .vl-action-btn.print:hover { background: #4f46e5; color: white; }
+
+    .vl-action-btn.regen { background: #f0fdf4; color: #059669; }
+    .vl-action-btn.regen:hover { background: #059669; color: white; }
+
+    .vl-action-btn.delete { background: #fee2e2; color: #991b1b; }
+    .vl-action-btn.delete:hover { background: #dc2626; color: white; }
+
+    .vl-empty { text-align: center; padding: 80px 20px; color: #9ca3af; }
+    .vl-empty i { font-size: 72px; display: block; margin-bottom: 16px; opacity: 0.4; }
+    .vl-empty p { font-size: 15px; margin: 0; }
+
+    .vl-pagination { display: flex; justify-content: center; gap: 6px; margin-top: 20px; }
+    .vl-pagination a, .vl-pagination span {
+        min-width: 40px; height: 40px; padding: 0 12px; border-radius: 10px;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 13.5px; text-decoration: none;
+        transition: all 0.15s;
+    }
+    .vl-pagination a {
+        background: white; color: #dc2626; border: 1.5px solid #e5e7eb;
+    }
+    .vl-pagination a:hover { background: #fee2e2; border-color: #fca5a5; }
+    .vl-pagination span.active {
+        background: #dc2626; color: white; border: 1.5px solid #dc2626;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       Modal
+       ═══════════════════════════════════════════════════════════ */
+    .vl-modal .modal-dialog { max-width: 1200px; margin: 16px auto; }
+    .vl-modal .modal-content {
+        border-radius: 18px; overflow: hidden; border: none;
+        max-height: 96vh; display: flex; flex-direction: column;
+    }
+    .vl-modal .modal-header {
+        background: linear-gradient(135deg, #dc2626, #991b1b);
+        color: white; padding: 22px 28px; border: none;
+        flex-shrink: 0;
+        display: flex; align-items: center; justify-content: space-between;
+    }
+    .vl-modal .modal-header h5 {
+        font-weight: 800; font-size: 20px; margin: 0;
+        display: flex; align-items: center; gap: 10px;
+    }
+    .vl-modal .modal-body {
+        padding: 28px; background: #f1f5f9;
+        overflow-y: auto; overflow-x: hidden;
+        max-height: calc(96vh - 150px); flex: 1;
+    }
+    .vl-modal .modal-footer {
+        background: white; border-top: 1.5px solid #e5e7eb;
+        padding: 16px 28px; flex-shrink: 0;
+        display: flex; justify-content: flex-end;
+        gap: 10px; flex-wrap: wrap;
+    }
+
+    /* ═══ IN-MODAL ERROR BANNER ═══ */
+    .rx-modal-error {
+        background: linear-gradient(135deg, #fef2f2, #fee2e2);
+        border: 2px solid #fca5a5;
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 20px;
+        display: none;
+    }
+    .rx-modal-error.show { display: block; }
+    .rx-modal-error-title {
+        font-size: 15px; font-weight: 800;
+        color: #991b1b;
+        display: flex; align-items: center; gap: 10px;
+        margin-bottom: 8px;
+    }
+    .rx-modal-error-title i { font-size: 20px; }
+    .rx-modal-error-text {
+        margin: 0; color: #7f1d1d;
+        font-size: 15px; font-weight: 600;
+        line-height: 1.8;
+    }
+
+    /* ═══ IN-MODAL WARNING ═══ */
+    .rx-modal-warning {
+        background: linear-gradient(135deg, #fffbeb, #fef3c7);
+        border: 2px solid #fcd34d;
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-top: 16px;
+        display: none;
+    }
+    .rx-modal-warning.show { display: block; }
+    .rx-modal-warning-title {
+        font-size: 15px; font-weight: 800;
+        color: #92400e;
+        display: flex; align-items: center; gap: 10px;
+        margin-bottom: 6px;
+    }
+    .rx-modal-warning-title i { font-size: 20px; }
+    .rx-modal-warning-text {
+        margin: 0 0 12px; color: #78350f;
+        font-size: 14.5px; font-weight: 600;
+        line-height: 1.8;
+    }
+    .rx-modal-warning-list {
+        display: flex; flex-direction: column; gap: 8px;
+    }
+    .rx-warn-patient {
+        display: flex; align-items: center; gap: 12px;
+        padding: 12px 14px;
+        background: white; border: 1.5px solid #fcd34d;
+        border-radius: 10px;
+        cursor: pointer; transition: all 0.15s;
+    }
+    .rx-warn-patient:hover {
+        background: #fef3c7;
+        border-color: #f59e0b;
+        transform: translateX(-3px);
+    }
+    .rx-warn-patient .p-avatar {
+        width: 38px; height: 38px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #f59e0b, #b45309);
+        color: white;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 800; font-size: 15px; flex-shrink: 0;
+    }
+    .rx-warn-patient .p-avatar.female {
+        background: linear-gradient(135deg, #db2777, #9d174d);
+    }
+    .rx-warn-patient .p-info { flex: 1; min-width: 0; }
+    .rx-warn-patient .p-name {
+        font-size: 14.5px; font-weight: 800;
+        color: #78350f; margin-bottom: 3px;
+    }
+    .rx-warn-patient .p-meta {
+        font-size: 12.5px; color: #92400e; font-weight: 600;
+    }
+    .rx-warn-patient .p-action {
+        width: 34px; height: 34px;
+        border-radius: 9px;
+        background: #f59e0b; color: white;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 15px; flex-shrink: 0;
+    }
+
+    /* ═══ Form Sections ═══ */
+    .vl-modal-section {
+        background: white; border-radius: 14px; padding: 24px 28px;
+        margin-bottom: 20px; border: 1.5px solid #e2e8f0;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+    .vl-modal-section.highlight {
+        border-color: #fca5a5;
+        box-shadow: 0 4px 16px rgba(220,38,38,0.06);
+    }
+    .vl-modal-section-title {
+        font-size: 18px; font-weight: 800; color: #dc2626;
+        margin-bottom: 20px; padding-bottom: 16px;
+        border-bottom: 2px dashed #f1f5f9;
+        display: flex; align-items: center; gap: 12px;
+    }
+    .vl-modal-section-title .icon-box {
+        width: 40px; height: 40px; border-radius: 11px;
+        background: #fee2e2; color: #dc2626;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 20px; flex-shrink: 0;
+    }
+    .vl-modal-section-title .en {
+        font-family: 'Arial', sans-serif; color: #94a3b8;
+        font-size: 13px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.5px; margin-right: auto;
+    }
+
+    .vl-form-label {
+        display: block; font-size: 15.5px; font-weight: 800;
+        color: #1e293b; margin-bottom: 9px;
+    }
+    .vl-form-label .en {
+        font-family: 'Arial', sans-serif; color: #64748b;
+        font-weight: 700; font-size: 13px; margin-right: 8px;
+    }
+    .vl-form-label .req { color: #dc2626; margin-right: 3px; font-size: 17px; }
+
+    .vl-form-control,
+    .vl-form-textarea {
+        width: 100%; padding: 14px 18px;
+        border: 1.5px solid #e2e8f0; border-radius: 11px;
+        font-size: 16px; background: #f8fafc;
+        transition: all 0.2s; font-family: inherit;
+        box-sizing: border-box; color: #0f172a;
+    }
+    .vl-form-control:focus,
+    .vl-form-textarea:focus {
+        outline: none; border-color: #dc2626; background: white;
+        box-shadow: 0 0 0 4px rgba(220,38,38,0.1);
+    }
+    .vl-form-textarea { min-height: 100px; resize: vertical; line-height: 1.8; }
+
+    .vl-vitals-grid {
+        display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+    }
+    .vl-vital-item label {
+        display: block; font-size: 13.5px; font-weight: 800;
+        color: #dc2626; margin-bottom: 9px;
+        text-transform: uppercase; letter-spacing: 0.5px;
+        font-family: 'Arial', sans-serif;
+    }
+    .vl-vital-item .vl-form-control {
+        text-align: center; font-weight: 700;
+        font-size: 17px; padding: 14px 10px;
+    }
+
+    .selected-patient {
+        display: none; align-items: center; gap: 12px;
+        padding: 14px; background: #ecfdf5;
+        border: 1.5px solid #6ee7b7; border-radius: 12px;
+    }
+    .selected-patient.show { display: flex; }
+
+    .toggle-new-patient {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 12px 14px; border: 1.5px dashed #cbd5e1;
+        border-radius: 12px; cursor: pointer;
+        font-size: 14.5px; font-weight: 700; color: #2563eb;
+        margin-top: 14px;
+    }
+    .toggle-new-patient:hover { background: #f0f7ff; }
+
+    .new-patient-fields {
+        display: none; background: #f8fafc;
+        border-radius: 12px; padding: 16px; margin-top: 12px;
+    }
+    .new-patient-fields.open { display: block; }
+
+    /* ═══ Ready prescriptions ═══ */
+    .ready-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 12px;
+    }
+    .ready-card {
+        display: flex; align-items: center; gap: 12px;
+        padding: 14px 16px;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        cursor: pointer; transition: all 0.15s;
+    }
+    .ready-card:hover {
+        border-color: #dc2626;
+        background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(220,38,38,0.12);
+    }
+    .ready-card-icon {
+        width: 44px; height: 44px; border-radius: 11px;
+        background: linear-gradient(135deg, #dc2626, #991b1b);
+        color: white;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 22px; flex-shrink: 0;
+    }
+    .ready-card-body { flex: 1; min-width: 0; }
+    .ready-card-title {
+        font-size: 15.5px; font-weight: 800; color: #0f172a;
+        margin-bottom: 5px; line-height: 1.3; word-break: break-word;
+    }
+    .ready-card-meta {
+        display: flex; gap: 10px; align-items: center;
+        font-size: 12.5px; color: #64748b; font-weight: 700;
+    }
+    .ready-card-fav { color: #f59e0b; font-size: 13px; }
+    .ready-card-action {
+        width: 34px; height: 34px; border-radius: 9px;
+        background: #fee2e2; color: #dc2626;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 17px; font-weight: 900; flex-shrink: 0;
+    }
+    .ready-card:hover .ready-card-action {
+        background: #dc2626; color: white;
+    }
+
+    /* ═══ Template Picker ═══ */
+    .template-picker {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 12px;
+    }
+    .template-card {
+        border: 2px solid #e5e7eb;
+        border-radius: 12px; overflow: hidden;
+        cursor: pointer; transition: all 0.2s;
+        background: white; position: relative;
+    }
+    .template-card:hover {
+        border-color: #fca5a5;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(220,38,38,0.1);
+    }
+    .template-card.selected {
+        border-color: #dc2626;
+        box-shadow: 0 0 0 3px rgba(220,38,38,0.15);
+    }
+    .template-card .thumb {
+        width: 100%; height: 130px;
+        background: #f8fafc;
+        display: flex; align-items: center; justify-content: center;
+        overflow: hidden;
+        border-bottom: 1.5px solid #e5e7eb;
+    }
+    .template-card .thumb img {
+        max-width: 100%; max-height: 100%; object-fit: contain;
+    }
+    .template-card .thumb .no-img { font-size: 40px; color: #cbd5e1; }
+    .template-card .name {
+        padding: 10px 12px; font-size: 13.5px; font-weight: 700;
+        color: #0f172a; text-align: center;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .template-card .default-badge {
+        position: absolute; top: 6px; right: 6px;
+        background: #dc2626; color: white;
+        font-size: 10.5px; font-weight: 800;
+        padding: 3px 8px; border-radius: 6px;
+    }
+    .template-card .check-mark {
+        position: absolute; top: 6px; left: 6px;
+        width: 24px; height: 24px; border-radius: 50%;
+        background: #dc2626; color: white;
+        display: none; align-items: center; justify-content: center;
+        font-size: 13px;
+    }
+    .template-card.selected .check-mark { display: flex; }
+
+    /* ═══ Medicine rows ═══ */
+    .med-item-row {
+        background: white; border: 2px solid #e2e8f0;
+        border-radius: 14px; padding: 24px 22px 18px;
+        margin-bottom: 16px;
+        position: relative; z-index: 1;
+        transition: border-color 0.15s;
+    }
+    .med-item-row:hover { border-color: #fca5a5; }
+    .med-item-row.filled {
+        border-color: #86efac;
+        background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 40%);
+    }
+    .med-item-row .med-num-badge {
+        position: absolute; top: -14px; right: 20px;
+        background: linear-gradient(135deg, #dc2626, #991b1b);
+        color: white; width: 34px; height: 34px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 15px; font-weight: 800;
+        box-shadow: 0 4px 10px rgba(220,38,38,0.3);
+        z-index: 10;
+    }
+    .med-item-row .remove-btn {
+        position: absolute; top: 12px; left: 12px;
+        width: 36px; height: 36px; border-radius: 10px;
+        background: #fee2e2; color: #991b1b; border: none;
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 17px; transition: all 0.15s;
+        z-index: 10;
+    }
+    .med-item-row .remove-btn:hover {
+        background: #dc2626; color: white; transform: rotate(90deg);
+    }
+
+    .med-search-wrap { position: relative; margin-bottom: 18px; }
+    .med-search-wrap label {
+        display: block; font-size: 13.5px; font-weight: 800;
+        color: #dc2626; margin-bottom: 9px;
+        text-transform: uppercase; letter-spacing: 0.5px;
+        font-family: 'Arial', sans-serif;
+    }
+    .med-search-input {
+        width: 100%; padding: 13px 46px 13px 18px;
+        border: 1.5px solid #e2e8f0; border-radius: 11px;
+        font-size: 16px; background: #f8fafc;
+        font-family: inherit; color: #0f172a;
+        cursor: pointer; transition: all 0.2s;
+        box-sizing: border-box;
+    }
+    .med-search-input:focus {
+        outline: none; border-color: #dc2626;
+        background: white;
+        box-shadow: 0 0 0 4px rgba(220,38,38,0.1);
+    }
+    .med-search-arrow {
+        position: absolute; left: 16px; top: 42px;
+        color: #94a3b8; pointer-events: none;
+        font-size: 15px; z-index: 1;
+    }
+    .med-search-wrap.open .med-search-arrow { color: #dc2626; }
+    .med-search-menu {
+        position: absolute; top: 100%; left: 0; right: 0;
+        background: white; border: 2px solid #dc2626;
+        border-radius: 14px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.25),
+                    0 0 0 4px rgba(220,38,38,0.08);
+        max-height: 340px; overflow-y: auto;
+        z-index: 10000; display: none;
+        padding: 8px; margin-top: 6px;
+    }
+    .med-search-wrap.open .med-search-menu { display: block; }
+
+    /* ⭐ Favorite medicine star in dropdown */
+    .med-fav-star {
+        color: #f59e0b;
+        margin-right: 6px;
+        font-size: 14px;
+        vertical-align: middle;
+        display: inline-block;
+    }
+    .sd-item.is-favorite .sd-item-avatar {
+        position: relative;
+    }
+    .sd-item.is-favorite .sd-item-avatar::after {
+        content: '\F586';
+        font-family: 'bootstrap-icons';
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        font-size: 11px;
+        color: #f59e0b;
+        background: white;
+        border-radius: 50%;
+        padding: 1px;
+        box-shadow: 0 0 0 1.5px #f59e0b;
+    }
+
+    .med-combos-row {
+        display: grid; grid-template-columns: 1fr 1fr;
+        gap: 14px; margin-bottom: 12px;
+    }
+
+    /* ⭐ Quantity input */
+    .med-quantity-wrap {
+        position: relative;
+    }
+    .med-quantity-wrap .combo-label {
+        display: block; font-size: 12.5px; font-weight: 800;
+        color: #475569; margin-bottom: 9px;
+        text-transform: uppercase; letter-spacing: 0.5px;
+        font-family: 'Arial', sans-serif;
+    }
+    .med-quantity-wrap .combo-label i { color: #dc2626; margin-right: 4px; }
+    .med-quantity-input {
+        width: 100%; padding: 13px 16px;
+        border: 1.5px solid #e2e8f0; border-radius: 11px;
+        font-size: 15px; background: #f8fafc;
+        font-family: inherit; color: #0f172a;
+        transition: all 0.2s; box-sizing: border-box;
+        font-weight: 700; text-align: center;
+    }
+    .med-quantity-input:focus {
+        outline: none; border-color: #dc2626;
+        background: white;
+        box-shadow: 0 0 0 4px rgba(220,38,38,0.1);
+    }
+    .med-quantity-hint {
+        font-size: 11px; color: #94a3b8;
+        margin-top: 4px; text-align: center;
+        font-weight: 500;
+    }
+
+    .combo-wrap { position: relative; }
+    .combo-wrap.open { z-index: 9999; }
+    .combo-label {
+        display: block; font-size: 12.5px; font-weight: 800;
+        color: #475569; margin-bottom: 9px;
+        text-transform: uppercase; letter-spacing: 0.5px;
+        font-family: 'Arial', sans-serif;
+    }
+    .combo-label i { color: #dc2626; margin-right: 4px; }
+    .combo-input-wrap { position: relative; }
+    .combo-input {
+        width: 100%; padding: 13px 44px 13px 16px;
+        border: 1.5px solid #e2e8f0; border-radius: 11px;
+        font-size: 15px; background: #f8fafc;
+        font-family: inherit; color: #0f172a;
+        cursor: text; transition: all 0.2s;
+        box-sizing: border-box; font-weight: 600;
+    }
+    .combo-input:focus {
+        outline: none; border-color: #dc2626;
+        background: white;
+        box-shadow: 0 0 0 4px rgba(220,38,38,0.1);
+    }
+    .combo-arrow {
+        position: absolute; left: 14px; top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8; pointer-events: none;
+        font-size: 14px;
+    }
+    .combo-wrap.open .combo-arrow {
+        transform: translateY(-50%) rotate(180deg);
+        color: #dc2626;
+    }
+    .combo-menu {
+        position: absolute; top: calc(100% + 6px);
+        left: 0; right: 0; background: white;
+        border: 2px solid #dc2626; border-radius: 12px;
+        box-shadow: 0 16px 40px rgba(0,0,0,0.2),
+                    0 0 0 4px rgba(220,38,38,0.06);
+        max-height: 280px; overflow-y: auto;
+        z-index: 10000; display: none; padding: 6px;
+    }
+    .combo-wrap.open .combo-menu { display: block; }
+    .combo-item {
+        padding: 11px 15px; border-radius: 8px;
+        cursor: pointer; font-size: 15px; font-weight: 600;
+        color: #0f172a; transition: background 0.12s;
+        margin-bottom: 2px;
+        display: flex; align-items: center;
+        justify-content: space-between;
+    }
+    .combo-item:hover, .combo-item.highlighted {
+        background: #fef2f2; color: #dc2626;
+    }
+    .combo-item.selected {
+        background: #fee2e2; color: #991b1b; font-weight: 800;
+    }
+    .combo-item.selected::after {
+        content: '\F26E'; font-family: 'bootstrap-icons';
+        color: #dc2626; font-size: 15px;
+    }
+    .combo-empty {
+        padding: 20px; text-align: center;
+        color: #94a3b8; font-size: 14px;
+    }
+    .combo-custom-hint {
+        padding: 11px 15px; border-radius: 8px;
+        background: #fee2e2; color: #991b1b;
+        font-size: 14px; font-weight: 700;
+        cursor: pointer;
+        display: flex; align-items: center; gap: 8px;
+        margin-top: 4px;
+        border-top: 1.5px dashed #fca5a5;
+    }
+    .combo-custom-hint:hover { background: #fecaca; }
+
+    .sd-item {
+        padding: 13px 16px; border-radius: 10px;
+        cursor: pointer; display: flex; align-items: center;
+        gap: 12px; transition: background 0.12s; margin-bottom: 3px;
+    }
+    .sd-item:hover, .sd-item.highlighted { background: #fef2f2; }
+    .sd-item.selected { background: #fee2e2; }
+    .sd-item-avatar {
+        width: 42px; height: 42px; border-radius: 11px;
+        background: linear-gradient(135deg, #dc2626, #991b1b);
+        color: white; display: flex; align-items: center;
+        justify-content: center; font-weight: 800;
+        font-size: 16px; flex-shrink: 0;
+    }
+    .sd-item-avatar.female { background: linear-gradient(135deg, #db2777, #9d174d); }
+    .sd-item-info { flex: 1; min-width: 0; }
+    .sd-item-name {
+        font-size: 16px; font-weight: 700; color: #0f172a;
+        margin-bottom: 3px;
+        white-space: nowrap; overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .sd-item-meta { font-size: 13px; color: #64748b; font-weight: 500; }
+    .sd-empty {
+        padding: 36px 20px; text-align: center;
+        color: #94a3b8; font-size: 15px;
+    }
+    .sd-empty i {
+        font-size: 40px; display: block;
+        margin-bottom: 10px; opacity: 0.4;
+    }
+
+    .searchable-dropdown { position: relative; z-index: 100; }
+    .searchable-dropdown.open { z-index: 9999; }
+    .searchable-dropdown-input {
+        width: 100%; padding: 14px 46px 14px 18px;
+        border: 1.5px solid #e2e8f0; border-radius: 11px;
+        font-size: 16px; background: #f8fafc;
+        font-family: inherit; color: #0f172a;
+        cursor: pointer; transition: all 0.2s;
+        box-sizing: border-box;
+    }
+    .searchable-dropdown-input:focus {
+        outline: none; border-color: #dc2626;
+        background: white;
+        box-shadow: 0 0 0 4px rgba(220,38,38,0.1);
+    }
+    .searchable-dropdown-arrow {
+        position: absolute; left: 16px; top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8; pointer-events: none; font-size: 15px;
+    }
+    .searchable-dropdown-menu {
+        position: absolute; top: calc(100% + 6px);
+        left: 0; right: 0; background: white;
+        border: 2px solid #dc2626; border-radius: 14px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+        max-height: 360px; overflow-y: auto;
+        z-index: 10000; display: none; padding: 8px;
+    }
+    .searchable-dropdown.open .searchable-dropdown-menu { display: block; }
+    .searchable-dropdown-item {
+        padding: 13px 16px; border-radius: 10px;
+        cursor: pointer; display: flex; align-items: center;
+        gap: 12px; transition: background 0.12s;
+        margin-bottom: 3px;
+    }
+    .searchable-dropdown-item:hover,
+    .searchable-dropdown-item.highlighted { background: #fef2f2; }
+
+    .vl-btn-cancel {
+        background: #f1f5f9; color: #334155;
+        border: 1.5px solid #e2e8f0; padding: 14px 30px;
+        border-radius: 11px; font-weight: 700; font-size: 16px;
+        cursor: pointer; font-family: inherit;
+        display: inline-flex; align-items: center; gap: 8px;
+    }
+    .vl-btn-cancel:hover { background: #e2e8f0; color: #0f172a; }
+
+    .vl-btn-submit {
+        background: linear-gradient(135deg, #dc2626, #991b1b);
+        color: white; border: none; padding: 14px 34px;
+        border-radius: 11px; font-weight: 700; font-size: 16px;
+        cursor: pointer; display: inline-flex;
+        align-items: center; gap: 10px; font-family: inherit;
+        box-shadow: 0 6px 18px rgba(220,38,38,0.3);
+    }
+    .vl-btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 26px rgba(220,38,38,0.4);
+    }
+
+    .btn-add-med-row {
+        background: #fef2f2; color: #dc2626;
+        border: 2px dashed #fca5a5;
+        padding: 14px; border-radius: 10px;
+        font-weight: 700; font-size: 15px;
+        cursor: pointer; width: 100%;
+        display: flex; align-items: center; justify-content: center;
+        gap: 8px; font-family: inherit; margin-top: 8px;
+    }
+    .btn-add-med-row:hover { background: #fee2e2; }
+
+    .view-row {
+        display: flex; justify-content: space-between;
+        padding: 12px 0; font-size: 15px;
+        border-bottom: 1px dashed #f1f5f9;
+        gap: 16px;
+    }
+    .view-row:last-child { border-bottom: none; }
+    .view-row .lbl {
+        color: #64748b; font-weight: 700;
+        font-size: 14px; flex-shrink: 0;
+    }
+    .view-row .val {
+        color: #0f172a; font-weight: 600;
+        text-align: left; word-break: break-word;
+    }
+    .view-row .val.empty { color: #cbd5e1; font-weight: 500; }
+
+    .med-qty-badge-view {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1.5px solid #dc2626;
+        font-weight: 800;
+        font-size: 12px;
+        padding: 3px 10px;
+        border-radius: 20px;
+        margin-right: 8px;
+        direction: ltr;
+    }
+
+    @media (max-width: 768px) {
+        .vl-table thead { display: none; }
+        .vl-table tbody tr {
+            display: block; margin-bottom: 12px;
+            border-radius: 12px; border: 1.5px solid #e5e7eb;
+            padding: 12px;
+        }
+        .vl-table tbody td {
+            display: flex; justify-content: space-between;
+            padding: 6px 0; text-align: left;
+        }
+        .vl-table tbody td::before {
+            content: attr(data-label);
+            font-weight: 700; color: #6b7280; font-size: 12px;
+        }
+        .vl-actions { justify-content: flex-start; }
+        .vl-vitals-grid { grid-template-columns: 1fr 1fr; }
+        .med-combos-row { grid-template-columns: 1fr; }
+        .ready-grid { grid-template-columns: 1fr; }
+        .vl-modal .modal-dialog { max-width: 100%; margin: 8px; }
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<!-- ═══ Header ═══ -->
+<div class="vl-page-header">
+    <div>
+        <h1>
+            <i class="bi bi-prescription2" style="color:#dc2626;"></i>
+            {{ page_title }}
+        </h1>
+        <p>مدیریت همه نسخه‌های ثبت‌شده</p>
+    </div>
+    <button class="btn-create-vl" onclick="openCreateModal()">
+        <i class="bi bi-plus-circle-fill"></i> نسخه جدید
+    </button>
+</div>
+
+
+<!-- ═══ Stats ═══ -->
+<div class="vl-stats">
+    <div class="vl-stat-card">
+        <div class="vl-stat-icon total"><i class="bi bi-collection-fill"></i></div>
+        <div>
+            <div class="vl-stat-num">{{ stats.total_count }}</div>
+            <div class="vl-stat-lbl">مجموع نسخه‌ها</div>
+        </div>
+    </div>
+    <div class="vl-stat-card">
+        <div class="vl-stat-icon today"><i class="bi bi-calendar-check-fill"></i></div>
+        <div>
+            <div class="vl-stat-num">{{ stats.today_count }}</div>
+            <div class="vl-stat-lbl">امروز</div>
+        </div>
+    </div>
+    <div class="vl-stat-card">
+        <div class="vl-stat-icon week"><i class="bi bi-calendar-week-fill"></i></div>
+        <div>
+            <div class="vl-stat-num">{{ stats.week_count }}</div>
+            <div class="vl-stat-lbl">این هفته</div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ═══ Filter ═══ -->
+<form method="get" class="vl-filter-bar">
+    <input type="text" name="search" value="{{ search_query }}"
+           placeholder="🔍 جستجو: شماره نسخه، نام مریض، تشخیص...">
+
+    <select name="date">
+        <option value="">همه تاریخ‌ها</option>
+        <option value="today" {% if date_filter == 'today' %}selected{% endif %}>امروز</option>
+        <option value="week" {% if date_filter == 'week' %}selected{% endif %}>این هفته</option>
+        <option value="month" {% if date_filter == 'month' %}selected{% endif %}>این ماه</option>
+    </select>
+
+    <button type="submit" class="btn-filter-vl">
+        <i class="bi bi-search"></i> جستجو
+    </button>
+
+    {% if search_query or date_filter %}
+    <a href="{% url 'prescription_list' %}" class="btn-reset-vl">
+        <i class="bi bi-x-circle"></i> پاک کردن
+    </a>
+    {% endif %}
+</form>
+
+
+<!-- ═══ Table ═══ -->
+<div class="vl-table-wrapper">
+    <table class="vl-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Patient</th>
+                <th>Rx No.</th>
+                <th>Date</th>
+                <th>Diagnosis</th>
+                <th>Meds</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rx in prescriptions %}
+            <tr>
+                <td data-label="#">{{ forloop.counter0|add:prescriptions.start_index }}</td>
+
+                <td data-label="Patient">
+                    <div class="vl-patient-cell">
+                        <div class="vl-avatar {% if rx.patient.gender == 'F' %}female{% endif %}">
+                            {{ rx.patient.first_name|first|upper }}
+                        </div>
+                        <div>
+                            <div class="vl-patient-name">{{ rx.patient.full_name }}</div>
+                            <div class="vl-patient-sub">
+                                {% if rx.patient.age %}{{ rx.patient.age }} ساله{% endif %}
+                                {% if rx.patient.gender %} — {{ rx.patient.get_gender_display }}{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </td>
+
+                <td data-label="Rx No.">
+                    <span class="vl-number">{{ rx.prescription_number }}</span>
+                </td>
+
+                <td data-label="Date">
+                    {% if rx.prescription_date == today %}
+                    <span class="vl-badge today">
+                        <i class="bi bi-calendar-check-fill"></i> امروز
+                    </span>
+                    {% else %}
+                    {{ rx.prescription_date|date:"Y-m-d" }}
+                    {% endif %}
+                </td>
+
+                <td data-label="Diagnosis">
+                    {% if rx.diagnosis %}
+                        {{ rx.diagnosis|truncatechars:25 }}
+                    {% else %}
+                        <span style="color:#9ca3af;">—</span>
+                    {% endif %}
+                </td>
+
+                <td data-label="Meds">
+                    {% with rx.items.count as meds_count %}
+                        {% if meds_count > 0 %}
+                        <span class="vl-badge meds">
+                            <i class="bi bi-capsule"></i> {{ meds_count }}
+                        </span>
+                        {% else %}
+                        <span style="color:#9ca3af;">—</span>
+                        {% endif %}
+                    {% endwith %}
+                </td>
+
+                <td data-label="Actions">
+                    <div class="vl-actions">
+                        <button class="vl-action-btn view"
+                                onclick="viewPrescription({{ rx.id }})" title="View">
+                            <i class="bi bi-eye-fill"></i>
+                        </button>
+                        <button class="vl-action-btn edit"
+                                onclick="editPrescription({{ rx.id }})" title="Edit">
+                            <i class="bi bi-pencil-fill"></i>
+                        </button>
+                        <a href="{% url 'prescription_print_page' rx.id %}"
+                           class="vl-action-btn print" title="Print">
+                            <i class="bi bi-printer-fill"></i>
+                        </a>
+                        <a href="{% url 'prescription_regenerate' rx.id %}"
+                           class="vl-action-btn regen" title="Regenerate">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </a>
+                        <button class="vl-action-btn delete"
+                                onclick="confirmDelete({{ rx.id }}, '{{ rx.prescription_number }}', '{{ rx.patient.full_name|escapejs }}')"
+                                title="Delete">
+                            <i class="bi bi-trash-fill"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7">
+                    <div class="vl-empty">
+                        <i class="bi bi-file-earmark-medical"></i>
+                        <p>هیچ نسخه‌ای یافت نشد</p>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+
+<!-- ═══ Pagination ═══ -->
+{% if prescriptions.has_other_pages %}
+<div class="vl-pagination">
+    {% if prescriptions.has_previous %}
+    <a href="?page={{ prescriptions.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}">
+        <i class="bi bi-chevron-right"></i>
+    </a>
+    {% endif %}
+
+    {% for num in prescriptions.paginator.page_range %}
+        {% if prescriptions.number == num %}
+            <span class="active">{{ num }}</span>
+        {% elif num > prescriptions.number|add:-3 and num < prescriptions.number|add:3 %}
+            <a href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}">{{ num }}</a>
+        {% endif %}
+    {% endfor %}
+
+    {% if prescriptions.has_next %}
+    <a href="?page={{ prescriptions.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}">
+        <i class="bi bi-chevron-left"></i>
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MODAL: Create / Edit Prescription
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="modal fade vl-modal" id="createModal" tabindex="-1"
+     data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" id="createForm" action="{% url 'prescription_list' %}" novalidate
+                  onsubmit="return handleFormSubmit(event);"
+                  onkeydown="return handleFormKeydown(event);">
+                {% csrf_token %}
+                <input type="hidden" name="action" id="formAction" value="create">
+                <input type="hidden" name="prescription_id" id="formPrescriptionId" value="">
+                <input type="hidden" name="patient_id" id="create_patient_id" value="">
+
+                <div class="modal-header">
+                    <h5 id="modalTitle">
+                        <i class="bi bi-plus-circle-fill"></i>
+                        نسخه جدید
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="rx-modal-error" id="createErrorBox">
+                        <div class="rx-modal-error-title">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            <span>Error — خطا</span>
+                        </div>
+                        <p class="rx-modal-error-text" id="createErrorText"></p>
+                    </div>
+
+                    <!-- SECTION 1: PATIENT -->
+                    <div class="vl-modal-section highlight">
+                        <div class="vl-modal-section-title">
+                            <span class="icon-box"><i class="bi bi-person-fill"></i></span>
+                            انتخاب یا ساخت مریض
+                            <span class="en">PATIENT</span>
+                        </div>
+
+                        <div class="selected-patient" id="selectedPatientBox">
+                            <div class="vl-avatar" id="selectedPatientAvatar">?</div>
+                            <div style="flex:1;">
+                                <div style="font-weight:700;font-size:15.5px;" id="selectedPatientName">—</div>
+                                <div class="vl-patient-sub" id="selectedPatientMeta">—</div>
+                            </div>
+                            <button type="button" class="vl-action-btn delete"
+                                    onclick="clearPatient()" title="تغییر مریض">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+
+                        <div id="patientPickerBox">
+                            <div class="searchable-dropdown" id="patientDropdown">
+                                <input type="text"
+                                       class="searchable-dropdown-input"
+                                       id="patientSearchInput"
+                                       placeholder="جستجو یا انتخاب مریض..."
+                                       autocomplete="off">
+                                <i class="bi bi-chevron-down searchable-dropdown-arrow"></i>
+                                <div class="searchable-dropdown-menu" id="patientDropdownMenu">
+                                    <div class="sd-empty">
+                                        <i class="bi bi-search"></i>
+                                        برای جستجو تایپ کنید...
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="toggle-new-patient" onclick="toggleNewPatient()">
+                                <span><i class="bi bi-person-plus-fill"></i> ثبت مریض جدید</span>
+                                <i class="bi bi-chevron-down" id="newPatientChevron"></i>
+                            </div>
+
+                            <div class="new-patient-fields" id="newPatientFields">
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <label class="vl-form-label">نام <span class="en">First Name</span> *</label>
+                                        <input type="text" name="new_first_name" id="id_new_first_name"
+                                               class="vl-form-control patient-check-input" autocomplete="off">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="vl-form-label">تخلص <span class="en">Last Name</span> *</label>
+                                        <input type="text" name="new_last_name" id="id_new_last_name"
+                                               class="vl-form-control patient-check-input" autocomplete="off">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="vl-form-label">نام پدر <span class="en">Father Name</span> *</label>
+                                        <input type="text" name="new_father_name" id="id_new_father_name"
+                                               class="vl-form-control patient-check-input" autocomplete="off">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="vl-form-label">جنسیت <span class="en">Gender</span> *</label>
+                                        <select name="new_gender" id="id_new_gender" class="vl-form-control">
+                                            <option value="M">مرد — Male</option>
+                                            <option value="F">زن — Female</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="vl-form-label">سن <span class="en">Age</span> *</label>
+                                        <input type="number" name="new_age" id="id_new_age" class="vl-form-control" min="0">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="vl-form-label">شماره تماس <span class="en">Phone</span></label>
+                                        <input type="text" name="new_phone" id="id_new_phone"
+                                               class="vl-form-control patient-check-input" autocomplete="off">
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="vl-form-label">آدرس <span class="en">Address</span></label>
+                                        <input type="text" name="new_address" id="id_new_address" class="vl-form-control">
+                                    </div>
+                                </div>
+
+                                <div class="rx-modal-warning" id="existingPatientWarning">
+                                    <div class="rx-modal-warning-title">
+                                        <i class="bi bi-exclamation-triangle-fill"></i>
+                                        <span>مریض مشابه یافت شد — Similar patient found</span>
+                                    </div>
+                                    <p class="rx-modal-warning-text">
+                                        این مریض قبلاً در سیستم ثبت شده است. برای جلوگیری از تکرار،
+                                        یکی از موارد زیر را انتخاب کنید:
+                                    </p>
+                                    <div class="rx-modal-warning-list" id="existingPatientList"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 2: TEMPLATE + DATE -->
+                    <div class="vl-modal-section highlight">
+                        <div class="vl-modal-section-title">
+                            <span class="icon-box"><i class="bi bi-palette-fill"></i></span>
+                            دیزاین و تاریخ نسخه
+                            <span class="en">TEMPLATE & DATE</span>
+                        </div>
+
+                        <div class="template-picker" id="templatePicker" style="margin-bottom:16px;">
+                            {% for t in templates %}
+                            <div class="template-card {% if t.id == default_template_id %}selected{% endif %}"
+                                 data-id="{{ t.id }}"
+                                 onclick="selectTemplate(this, {{ t.id }})">
+                                <div class="check-mark"><i class="bi bi-check-lg"></i></div>
+                                {% if t.is_default %}<div class="default-badge">پیش‌فرض</div>{% endif %}
+                                <div class="thumb">
+                                    {% if t.background_image %}
+                                        <img src="{{ t.background_image.url }}" alt="{{ t.name }}">
+                                    {% else %}
+                                        <i class="bi bi-image no-img"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="name">{{ t.name }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <input type="hidden" name="template_id" id="selectedTemplateId"
+                               value="{{ default_template_id }}">
+
+                        <label class="vl-form-label" style="margin-top:14px;">تاریخ نسخه <span class="en">Date</span></label>
+                        <input type="date" name="prescription_date" id="prescriptionDate"
+                               class="vl-form-control" value="{% now 'Y-m-d' %}">
+                    </div>
+
+                    <!-- SECTION 3: READY PRESCRIPTIONS -->
+                    {% if ready_prescriptions %}
+                    <div class="vl-modal-section highlight">
+                        <div class="vl-modal-section-title">
+                            <span class="icon-box"><i class="bi bi-lightning-charge-fill"></i></span>
+                            نسخه‌های آماده
+                            <span class="en">READY PRESCRIPTIONS</span>
+                        </div>
+                        <p style="font-size:14.5px;color:#6b7280;margin-bottom:14px;">
+                            با کلیک روی هرکدام، دواها و اطلاعات به فرم اضافه می‌شود.
+                        </p>
+                        <div class="ready-grid">
+                            {% for rp in ready_prescriptions %}
+                                <div class="ready-card"
+                                     data-ready-id="{{ rp.id }}"
+                                     onclick="applyReady({{ rp.id }})">
+                                    <div class="ready-card-icon">
+                                        <i class="bi bi-lightning-charge-fill"></i>
+                                    </div>
+                                    <div class="ready-card-body">
+                                        <div class="ready-card-title">{{ rp.title }}</div>
+                                        <div class="ready-card-meta">
+                                            <span><i class="bi bi-capsule"></i> {{ rp.medications_count }} meds</span>
+                                            {% if rp.is_favorite %}
+                                                <span class="ready-card-fav"><i class="bi bi-star-fill"></i></span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="ready-card-action">
+                                        <i class="bi bi-plus-lg"></i>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- SECTION 4: CLINICAL -->
+                    <div class="vl-modal-section highlight">
+                        <div class="vl-modal-section-title">
+                            <span class="icon-box"><i class="bi bi-clipboard2-pulse-fill"></i></span>
+                            اطلاعات بالینی
+                            <span class="en">CLINICAL</span>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="vl-form-label">Signs & Symptoms <span class="en">علائم</span></label>
+                                <textarea name="signs_symptoms" id="f_signs_symptoms" class="vl-form-textarea" rows="3"
+                                          placeholder="Fever, cough, sore throat..."></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="vl-form-label">Diagnosis <span class="en">تشخیص</span></label>
+                                <textarea name="diagnosis" id="f_diagnosis" class="vl-form-textarea" rows="3"
+                                          placeholder="Definitive diagnosis..."></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="vl-form-label">Impression <span class="en">برداشت</span></label>
+                                <textarea name="impression" id="f_impression" class="vl-form-textarea" rows="3"
+                                          placeholder="Clinical impression..."></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="vl-form-label">Doctor Note <span class="en">یادداشت</span></label>
+                                <textarea name="doctor_note" id="f_doctor_note" class="vl-form-textarea" rows="3"
+                                          placeholder="Doctor's note..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 5: VITALS -->
+                    <div class="vl-modal-section highlight">
+                        <div class="vl-modal-section-title">
+                            <span class="icon-box"><i class="bi bi-heart-pulse-fill"></i></span>
+                            علائم حیاتی
+                            <span class="en">VITAL SIGNS</span>
+                        </div>
+                        <div class="vl-vitals-grid">
+                            <div class="vl-vital-item">
+                                <label>BP</label>
+                                <input type="text" name="blood_pressure" id="f_blood_pressure" class="vl-form-control" placeholder="120/80">
+                            </div>
+                            <div class="vl-vital-item">
+                                <label>PULSE</label>
+                                <input type="number" name="pulse" id="f_pulse" class="vl-form-control" placeholder="72">
+                            </div>
+                            <div class="vl-vital-item">
+                                <label>RR</label>
+                                <input type="number" name="respiratory_rate" id="f_respiratory_rate" class="vl-form-control" placeholder="16">
+                            </div>
+                            <div class="vl-vital-item">
+                                <label>TEMP</label>
+                                <input type="number" step="0.1" name="temperature" id="f_temperature" class="vl-form-control" placeholder="37.0">
+                            </div>
+                            <div class="vl-vital-item">
+                                <label>SpO₂</label>
+                                <input type="number" name="spo2" id="f_spo2" class="vl-form-control" placeholder="98">
+                            </div>
+                            <div class="vl-vital-item">
+                                <label>WEIGHT</label>
+                                <input type="number" step="1" name="weight" id="f_weight" class="vl-form-control" placeholder="75">
+                            </div>
+                            <div class="vl-vital-item">
+                                <label>HEIGHT</label>
+                                <input type="number" step="1" name="height" id="f_height" class="vl-form-control" placeholder="175">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 6: MEDICINES -->
+                    <div class="vl-modal-section highlight">
+                        <div class="vl-modal-section-title">
+                            <span class="icon-box"><i class="bi bi-capsule"></i></span>
+                            دواها
+                            <span class="en">MEDICATIONS</span>
+                        </div>
+                        <div id="medicineRows"></div>
+                        <button type="button" class="btn-add-med-row" onclick="addMedRow()">
+                            <i class="bi bi-plus-circle-fill"></i> Add Medicine
+                        </button>
+                    </div>
+
+                    <!-- SECTION 7: ADVICE -->
+                    <div class="vl-modal-section highlight">
+                        <div class="vl-modal-section-title">
+                            <span class="icon-box"><i class="bi bi-chat-left-text-fill"></i></span>
+                            توصیه‌ها
+                            <span class="en">ADVICE</span>
+                        </div>
+                        <textarea name="advice_text" id="f_advice_text" class="vl-form-textarea" rows="4"
+                                  placeholder="One advice per line — rest, fluids, ..."></textarea>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="vl-btn-cancel" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg"></i> لغو
+                    </button>
+                    <button type="submit" class="vl-btn-submit" id="submitBtn">
+                        <i class="bi bi-printer-fill"></i> ذخیره و چاپ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- ═══ MODAL: View Prescription Details ═══ -->
+<div class="modal fade vl-modal" id="viewModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:900px;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5><i class="bi bi-eye-fill"></i> جزئیات نسخه</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="viewModalBody">
+                <div style="text-align:center;padding:40px;">
+                    <i class="bi bi-hourglass-split" style="font-size:36px;color:#dc2626;"></i>
+                    <p style="margin-top:12px;color:#6b7280;">در حال بارگذاری...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="vl-btn-cancel" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg"></i> بستن
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MODAL: Delete — ⭐ FIXED to submit with action=delete
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:460px;">
+        <div class="modal-content" style="border-radius:18px;">
+            <form method="post" id="deleteForm" action="{% url 'prescription_list' %}">
+                {% csrf_token %}
+                <!-- ⭐ FIXED: added action=delete and correct field name -->
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="prescription_id" id="deletePrescriptionId" value="">
+
+                <div class="modal-body text-center p-4">
+                    <div style="width: 90px; height: 90px; margin: 0 auto 20px; border-radius: 50%;
+                                background: #fee2e2; display: flex; align-items: center;
+                                justify-content: center; font-size: 44px; color: #dc2626;">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">تایید حذف</h4>
+                    <p class="text-muted mb-0">
+                        آیا مطمئن هستید که می‌خواهید نسخه<br>
+                        <strong id="deleteRxNumber" style="color:#dc2626;"></strong><br>
+                        برای <strong id="deletePatientName" style="color:#0f172a;"></strong>
+                        را حذف کنید؟
+                    </p>
+                </div>
+
+                <div class="modal-footer justify-content-center" style="border:none;">
+                    <button type="button" class="vl-btn-cancel" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg"></i> لغو
+                    </button>
+                    <button type="submit" class="btn btn-danger" style="border-radius:10px;padding:13px 28px;font-weight:700;">
+                        <i class="bi bi-trash-fill"></i> بله، حذف کن
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+    // ═══════════════════════════════════════════════════════════
+    // Data from server
+    // ═══════════════════════════════════════════════════════════
+    const PATIENTS_DATA = [
+        {% for p in recent_patients %}
+        {
+            id: {{ p.id }},
+            name: "{{ p.full_name|escapejs }}",
+            father: "{{ p.father_name|default:''|escapejs }}",
+            age: "{{ p.age|default:'' }}",
+            gender: "{{ p.get_gender_display|default:''|escapejs }}",
+            phone: "{{ p.phone|default:''|escapejs }}",
+            genderCode: "{{ p.gender|default:'' }}",
+            initial: "{{ p.first_name|first|upper|escapejs }}"
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    const MEDICATIONS_DATA = [
+        {% for m in medications %}
+        {
+            id: {{ m.id }},
+            name: "{{ m.name|escapejs }}",
+            full_name: "{{ m.full_name|escapejs }}",
+            generic_name: "{{ m.generic_name|default:''|escapejs }}",
+            strength: "{{ m.strength|default:''|escapejs }}",
+            form: "{{ m.get_form_display|default:''|escapejs }}",
+            manufacturer: "{{ m.manufacturer|default:''|escapejs }}",
+            default_dose: "{{ m.default_dose|default:''|escapejs }}",
+            default_frequency: "{{ m.default_frequency|default:''|escapejs }}",
+            default_timing: "{{ m.default_timing|default:''|escapejs }}",
+            default_route: "{{ m.default_route|default:'oral'|escapejs }}",
+            default_duration: "{{ m.default_duration|default:''|escapejs }}",
+            is_favorite: {% if m.is_favorite %}true{% else %}false{% endif %}
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    const READY_API_URL = "{% url 'api_ready_prescription_detail' 999999 %}";
+    const PRESCRIPTION_API_URL = "{% url 'api_prescription_detail' 999999 %}";
+    const PATIENT_SEARCH_URL = "{% url 'api_search_patients' %}";
+
+    const FREQUENCIES = [
+        {v: "1x",   l: "Once daily"},
+        {v: "2x",   l: "Twice daily"},
+        {v: "3x",   l: "Three times daily"},
+        {v: "4x",   l: "Four times daily"},
+        {v: "q6h",  l: "Every 6 hours"},
+        {v: "q8h",  l: "Every 8 hours"},
+        {v: "q12h", l: "Every 12 hours"},
+        {v: "prn",  l: "As needed"},
+        {v: "stat", l: "Immediately"}
+    ];
+
+    const TIMINGS = [
+        {v: "before_meal",   l: "Before meal"},
+        {v: "after_meal",    l: "After meal"},
+        {v: "with_meal",     l: "With meal"},
+        {v: "empty_stomach", l: "Empty stomach"},
+        {v: "at_bedtime",    l: "At bedtime"},
+        {v: "morning",       l: "Morning"},
+        {v: "evening",       l: "Evening"},
+        {v: "any_time",      l: "Any time"}
+    ];
+
+    const ROUTES = [
+        {v: "oral",       l: "Oral"},
+        {v: "topical",    l: "Topical"},
+        {v: "injection",  l: "Injection"},
+        {v: "inhalation", l: "Inhalation"},
+        {v: "rectal",     l: "Rectal"},
+        {v: "eye",        l: "Ophthalmic (eye)"},
+        {v: "ear",        l: "Otic (ear)"},
+        {v: "nasal",      l: "Nasal"}
+    ];
+
+    const DOSES = [
+        "½ Tablet", "1 Tablet", "2 Tablets",
+        "1 Capsule", "2 Capsules",
+        "5 ml", "10 ml", "15 ml"
+    ];
+
+    const DURATIONS = [
+        "3 days", "5 days", "7 days", "10 days",
+        "14 days", "1 month", "2 months",
+        "3 months", "Continuous"
+    ];
+
+    let medCounter = 0;
+    let selectedTemplateId = {{ default_template_id|default:"null" }};
+
+    function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function showCreateError(text) {
+        const box = document.getElementById('createErrorBox');
+        const txt = document.getElementById('createErrorText');
+        if (!box || !txt) return;
+        if (!text) {
+            box.classList.remove('show');
+            txt.textContent = '';
+            return;
+        }
+        txt.textContent = text;
+        box.classList.add('show');
+        box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    function hideCreateError() { showCreateError(''); }
+
+    function debounce(fn, delay) {
+        let timer = null;
+        return function(...args) {
+            clearTimeout(timer);
+            timer = setTimeout(() => fn.apply(this, args), delay);
+        };
+    }
+
+    function handleFormSubmit(e) {
+        const pid = document.getElementById('create_patient_id').value;
+        const nf = document.getElementById('id_new_first_name').value.trim();
+        const nl = document.getElementById('id_new_last_name').value.trim();
+        const nfather = document.getElementById('id_new_father_name').value.trim();
+        const nage = document.getElementById('id_new_age').value.trim();
+
+        const hasExisting = !!pid;
+        const hasNew = nf && nl && nfather && nage;
+
+        if (!hasExisting && !hasNew) {
+            e.preventDefault();
+            e.stopPropagation();
+            showCreateError(
+                'Please select an existing patient OR fill in all required fields ' +
+                '(First Name, Last Name, Father Name, Age) to create a new patient.'
+            );
+            return false;
+        }
+
+        hideCreateError();
+        return true;
+    }
+
+    function handleFormKeydown(e) {
+        if (e.key !== 'Enter') return true;
+        if (e.target.tagName.toLowerCase() === 'textarea') return true;
+
+        if (e.target.classList.contains('combo-input') ||
+            e.target.classList.contains('med-search-input') ||
+            e.target.classList.contains('med-quantity-input') ||
+            e.target.classList.contains('searchable-dropdown-input')) {
+            return true;
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+    }
+
+    class SearchableDropdown {
+        constructor(config) {
+            this.wrapper = document.getElementById(config.wrapperId);
+            this.input = document.getElementById(config.inputId);
+            this.menu = document.getElementById(config.menuId);
+            this.data = config.data;
+            this.onSelect = config.onSelect;
+            this.highlightedIndex = -1;
+            this.filteredData = [...this.data];
+            this.init();
+        }
+        init() {
+            this.input.addEventListener('focus', () => this.open());
+            this.input.addEventListener('input', () => this.filter());
+            this.input.addEventListener('keydown', (e) => this.handleKeyDown(e));
+            document.addEventListener('click', (e) => {
+                if (!this.wrapper.contains(e.target)) this.close();
+            });
+            this.renderMenu();
+        }
+        open() { this.wrapper.classList.add('open'); this.renderMenu(); }
+        close() { this.wrapper.classList.remove('open'); this.highlightedIndex = -1; }
+        filter() {
+            const q = this.input.value.trim().toLowerCase();
+            if (!q) this.filteredData = [...this.data];
+            else this.filteredData = this.data.filter(item => {
+                const t = `${item.name} ${item.father} ${item.phone} ${item.id}`.toLowerCase();
+                return t.includes(q);
+            });
+            this.highlightedIndex = -1;
+            this.renderMenu();
+            this.open();
+        }
+        renderMenu() {
+            if (this.filteredData.length === 0) {
+                this.menu.innerHTML = '<div class="sd-empty"><i class="bi bi-search"></i>No results found</div>';
+                return;
+            }
+            const limited = this.filteredData.slice(0, 50);
+            this.menu.innerHTML = limited.map((item, idx) => {
+                const cls = 'sd-item-avatar' + ((item.genderCode === 'F') ? ' female' : '');
+                const parts = [];
+                if (item.age) parts.push(`${item.age} y/o`);
+                if (item.gender) parts.push(item.gender);
+                if (item.phone) parts.push(item.phone);
+                return `
+                    <div class="searchable-dropdown-item ${idx === this.highlightedIndex ? 'highlighted' : ''}"
+                         data-id="${item.id}" data-index="${idx}">
+                        <div class="${cls}">${escapeHtml(item.initial || '?')}</div>
+                        <div class="sd-item-info">
+                            <div class="sd-item-name">${escapeHtml(item.name)}${item.father ? ' — s/o ' + escapeHtml(item.father) : ''}</div>
+                            <div class="sd-item-meta">${escapeHtml(parts.join(' • '))}</div>
+                        </div>
+                    </div>`;
+            }).join('');
+            this.menu.querySelectorAll('.searchable-dropdown-item').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.select(parseInt(el.dataset.id));
+                });
+            });
+        }
+        handleKeyDown(e) {
+            if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); }
+            if (!this.wrapper.classList.contains('open')) {
+                if (e.key === 'ArrowDown' || e.key === 'Enter') this.open();
+                return;
+            }
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                this.highlightedIndex = Math.min(
+                    this.highlightedIndex + 1,
+                    Math.min(this.filteredData.length - 1, 49)
+                );
+                this.renderMenu();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                this.highlightedIndex = Math.max(this.highlightedIndex - 1, -1);
+                this.renderMenu();
+            } else if (e.key === 'Enter') {
+                let target = null;
+                if (this.highlightedIndex >= 0) {
+                    target = this.filteredData[this.highlightedIndex];
+                } else if (this.filteredData.length > 0) {
+                    target = this.filteredData[0];
+                }
+                if (target) this.select(target.id);
+            } else if (e.key === 'Escape') {
+                this.close();
+                this.input.blur();
+            }
+        }
+        select(id) {
+            const item = this.data.find(d => d.id === id);
+            if (!item) return;
+            this.onSelect(item);
+            this.close();
+        }
+        reset() {
+            this.input.value = '';
+            this.filteredData = [...this.data];
+            this.renderMenu();
+        }
+    }
+
+    let patientDropdown;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        patientDropdown = new SearchableDropdown({
+            wrapperId: 'patientDropdown',
+            inputId: 'patientSearchInput',
+            menuId: 'patientDropdownMenu',
+            data: PATIENTS_DATA,
+            onSelect: (p) => pickPatient(p)
+        });
+
+        document.querySelectorAll('.patient-check-input').forEach(input => {
+            input.addEventListener('input', debounce(checkExistingPatient, 400));
+        });
+
+        const panel = document.getElementById('newPatientFields');
+        if (panel) {
+            const observer = new MutationObserver(() => {
+                if (!panel.classList.contains('open')) {
+                    hideExistingWarning();
+                }
+            });
+            observer.observe(panel, { attributes: true, attributeFilter: ['class'] });
+        }
+
+        addMedRow();
+
+        {% if modal_error and form_data %}
+        const FORM_DATA = {
+            patient_id: "{{ form_data.patient_id|default:''|escapejs }}",
+            template_id: "{{ form_data.template_id|default:''|escapejs }}",
+            prescription_date: "{{ form_data.prescription_date|default:''|escapejs }}",
+            signs_symptoms: "{{ form_data.signs_symptoms|default:''|escapejs }}",
+            diagnosis: "{{ form_data.diagnosis|default:''|escapejs }}",
+            impression: "{{ form_data.impression|default:''|escapejs }}",
+            doctor_note: "{{ form_data.doctor_note|default:''|escapejs }}",
+            blood_pressure: "{{ form_data.blood_pressure|default:''|escapejs }}",
+            pulse: "{{ form_data.pulse|default:''|escapejs }}",
+            respiratory_rate: "{{ form_data.respiratory_rate|default:''|escapejs }}",
+            temperature: "{{ form_data.temperature|default:''|escapejs }}",
+            spo2: "{{ form_data.spo2|default:''|escapejs }}",
+            weight: "{{ form_data.weight|default:''|escapejs }}",
+            height: "{{ form_data.height|default:''|escapejs }}",
+            advice_text: "{{ form_data.advice_text|default:''|escapejs }}",
+
+            new_first_name: "{{ form_data.new_first_name|default:''|escapejs }}",
+            new_last_name: "{{ form_data.new_last_name|default:''|escapejs }}",
+            new_father_name: "{{ form_data.new_father_name|default:''|escapejs }}",
+            new_gender: "{{ form_data.new_gender|default:'M'|escapejs }}",
+            new_age: "{{ form_data.new_age|default:''|escapejs }}",
+            new_phone: "{{ form_data.new_phone|default:''|escapejs }}",
+            new_address: "{{ form_data.new_address|default:''|escapejs }}",
+
+            medication: [
+                {% for v in form_data.medication %}"{{ v|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}
+            ],
+            dose: [
+                {% for v in form_data.dose %}"{{ v|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}
+            ],
+            frequency: [
+                {% for v in form_data.frequency %}"{{ v|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}
+            ],
+            timing: [
+                {% for v in form_data.timing %}"{{ v|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}
+            ],
+            route: [
+                {% for v in form_data.route %}"{{ v|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}
+            ],
+            duration: [
+                {% for v in form_data.duration %}"{{ v|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}
+            ],
+            quantity: [
+                {% for v in form_data.quantity %}"{{ v|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}
+            ],
+
+            auto_patient: {% if form_data.auto_patient %}{
+                id: {{ form_data.auto_patient.id }},
+                name: "{{ form_data.auto_patient.name|escapejs }}",
+                age: "{{ form_data.auto_patient.age|escapejs }}",
+                gender: "{{ form_data.auto_patient.gender|escapejs }}",
+                phone: "{{ form_data.auto_patient.phone|escapejs }}",
+                genderCode: "{{ form_data.auto_patient.genderCode|escapejs }}",
+                initial: "{{ form_data.auto_patient.initial|escapejs }}"
+            }{% else %}null{% endif %}
+        };
+
+        function restoreFormData() {
+            if (FORM_DATA.auto_patient) {
+                pickPatient_noNav(FORM_DATA.auto_patient);
+                document.getElementById('create_patient_id').value = FORM_DATA.auto_patient.id;
+            } else if (FORM_DATA.patient_id) {
+                const p = PATIENTS_DATA.find(x => x.id == FORM_DATA.patient_id);
+                if (p) {
+                    pickPatient_noNav(p);
+                    document.getElementById('create_patient_id').value = p.id;
+                }
+            } else {
+                document.getElementById('newPatientFields').classList.add('open');
+                document.getElementById('newPatientChevron').style.transform = 'rotate(180deg)';
+            }
+
+            const setVal = (id, v) => {
+                const el = document.getElementById(id);
+                if (el) el.value = v || '';
+            };
+            setVal('id_new_first_name', FORM_DATA.new_first_name);
+            setVal('id_new_last_name',  FORM_DATA.new_last_name);
+            setVal('id_new_father_name', FORM_DATA.new_father_name);
+            setVal('id_new_gender',     FORM_DATA.new_gender);
+            setVal('id_new_age',        FORM_DATA.new_age);
+            setVal('id_new_phone',      FORM_DATA.new_phone);
+            setVal('id_new_address',    FORM_DATA.new_address);
+
+            if (FORM_DATA.template_id) {
+                selectedTemplateId = FORM_DATA.template_id;
+                document.getElementById('selectedTemplateId').value = FORM_DATA.template_id;
+                document.querySelectorAll('.template-card').forEach(c => {
+                    c.classList.toggle('selected', c.dataset.id == FORM_DATA.template_id);
+                });
+            }
+
+            if (FORM_DATA.prescription_date) {
+                document.getElementById('prescriptionDate').value = FORM_DATA.prescription_date;
+            }
+
+            setVal('f_signs_symptoms', FORM_DATA.signs_symptoms);
+            setVal('f_diagnosis',      FORM_DATA.diagnosis);
+            setVal('f_impression',     FORM_DATA.impression);
+            setVal('f_doctor_note',    FORM_DATA.doctor_note);
+
+            setVal('f_blood_pressure',   FORM_DATA.blood_pressure);
+            setVal('f_pulse',            FORM_DATA.pulse);
+            setVal('f_respiratory_rate', FORM_DATA.respiratory_rate);
+            setVal('f_temperature',      FORM_DATA.temperature);
+            setVal('f_spo2',             FORM_DATA.spo2);
+            setVal('f_weight',           FORM_DATA.weight);
+            setVal('f_height',           FORM_DATA.height);
+
+            setVal('f_advice_text', FORM_DATA.advice_text);
+
+            clearMeds();
+
+            const medsCount = FORM_DATA.medication.length;
+            if (medsCount === 0) {
+                addMedRow();
+            } else {
+                for (let i = 0; i < medsCount; i++) {
+                    const medId = FORM_DATA.medication[i];
+                    const medObj = medId ? MEDICATIONS_DATA.find(m => m.id == medId) : null;
+
+                    addMedRow({
+                        medication_id: medId || null,
+                        medication_name: medObj ? (medObj.full_name || medObj.name) : '',
+                        dose:      FORM_DATA.dose[i]      || '',
+                        frequency: FORM_DATA.frequency[i] || '',
+                        timing:    FORM_DATA.timing[i]    || '',
+                        route:     FORM_DATA.route[i]     || 'oral',
+                        duration:  FORM_DATA.duration[i]  || '',
+                        quantity:  FORM_DATA.quantity[i]  || '',
+                    });
+                }
+            }
+        }
+
+        restoreFormData();
+
+        new bootstrap.Modal(document.getElementById('createModal')).show();
+        setTimeout(() => {
+            showCreateError("{{ modal_error|escapejs }}");
+        }, 150);
+
+        {% elif modal_error %}
+        showCreateError("{{ modal_error|escapejs }}");
+        new bootstrap.Modal(document.getElementById('createModal')).show();
+        {% endif %}
+    });
+
+    let npLastFound = null;
+
+    function checkExistingPatient() {
+        const first = document.getElementById('id_new_first_name').value.trim();
+        const last = document.getElementById('id_new_last_name').value.trim();
+        const father = document.getElementById('id_new_father_name').value.trim();
+        const phone = document.getElementById('id_new_phone').value.trim();
+
+        if (first.length < 2 && last.length < 2 && phone.length < 4) {
+            hideExistingWarning();
+            return;
+        }
+        const query = [first, last, father].filter(Boolean).join(' ') || phone;
+        if (!query || query.length < 2) {
+            hideExistingWarning();
+            return;
+        }
+
+        fetch(PATIENT_SEARCH_URL + '?q=' + encodeURIComponent(query))
+            .then(r => r.json())
+            .then(data => {
+                const results = data.results || [];
+                if (results.length === 0) {
+                    hideExistingWarning();
+                    npLastFound = null;
+                    return;
+                }
+                const matches = results.filter(p => {
+                    const fullName = (p.full_name || '').toLowerCase();
+                    const fatherName = (p.father_name || '').toLowerCase();
+                    const phoneVal = (p.phone || '');
+
+                    const nameMatch = first && fullName.includes(first.toLowerCase());
+                    const lastMatch = last && fullName.includes(last.toLowerCase());
+                    const fatherMatch = father && fatherName.includes(father.toLowerCase());
+                    const phoneMatch = phone.length >= 4 && phoneVal.includes(phone);
+
+                    return (nameMatch && lastMatch) || fatherMatch || phoneMatch;
+                });
+
+                if (matches.length === 0) {
+                    hideExistingWarning();
+                    npLastFound = null;
+                    return;
+                }
+                npLastFound = matches[0];
+                showExistingWarning(matches);
+            })
+            .catch(err => console.error('Duplicate check error:', err));
+    }
+
+    function showExistingWarning(patients) {
+        const box = document.getElementById('existingPatientWarning');
+        const list = document.getElementById('existingPatientList');
+        if (!box || !list) return;
+
+        list.innerHTML = patients.slice(0, 5).map((p) => {
+            const cls = 'p-avatar' + ((p.gender === 'زن' || p.gender === 'Female') ? ' female' : '');
+            const initials = (p.initials || '?');
+            const metaParts = [];
+            if (p.age) metaParts.push(p.age + ' y/o');
+            if (p.gender) metaParts.push(p.gender);
+            if (p.phone) metaParts.push(p.phone);
+
+            return `
+                <div class="rx-warn-patient"
+                     data-id="${p.id}"
+                     data-name="${escapeHtml(p.full_name || '')}"
+                     data-age="${escapeHtml(p.age || '')}"
+                     data-gender="${escapeHtml(p.gender || '')}"
+                     data-phone="${escapeHtml(p.phone || '')}"
+                     data-initial="${escapeHtml(initials)}"
+                     onclick="useExistingPatientFromEl(this)">
+                    <div class="${cls}">${escapeHtml(initials)}</div>
+                    <div class="p-info">
+                        <div class="p-name">${escapeHtml(p.full_name || '')}${p.father_name ? ' — s/o ' + escapeHtml(p.father_name) : ''}</div>
+                        <div class="p-meta">${escapeHtml(metaParts.join(' • '))}</div>
+                    </div>
+                    <div class="p-action"><i class="bi bi-arrow-left"></i></div>
+                </div>
+            `;
+        }).join('');
+        box.classList.add('show');
+    }
+
+    function hideExistingWarning() {
+        const box = document.getElementById('existingPatientWarning');
+        if (box) box.classList.remove('show');
+    }
+
+    function useExistingPatientFromEl(el) {
+        const p = {
+            id: parseInt(el.dataset.id),
+            name: el.dataset.name,
+            age: el.dataset.age,
+            gender: el.dataset.gender,
+            phone: el.dataset.phone,
+            initial: el.dataset.initial,
+            genderCode: (el.dataset.gender === 'زن' || el.dataset.gender === 'Female') ? 'F' : 'M'
+        };
+
+        document.getElementById('id_new_first_name').value = '';
+        document.getElementById('id_new_last_name').value = '';
+        document.getElementById('id_new_father_name').value = '';
+        document.getElementById('id_new_phone').value = '';
+        document.getElementById('id_new_age').value = '';
+        document.getElementById('id_new_address').value = '';
+
+        document.getElementById('newPatientFields').classList.remove('open');
+        hideExistingWarning();
+        npLastFound = null;
+        pickPatient(p);
+    }
+
+    function pickPatient(p) {
+        document.getElementById('create_patient_id').value = p.id;
+        document.getElementById('patientSearchInput').value = p.name;
+
+        document.getElementById('selectedPatientName').textContent = p.name;
+        document.getElementById('selectedPatientMeta').textContent =
+            [p.age ? p.age + ' y/o' : '', p.gender, p.phone].filter(Boolean).join(' • ');
+        document.getElementById('selectedPatientAvatar').textContent = p.initial || '?';
+        document.getElementById('selectedPatientAvatar').className =
+            'vl-avatar' + ((p.genderCode === 'F' || p.gender === 'زن') ? ' female' : '');
+
+        document.getElementById('selectedPatientBox').classList.add('show');
+        document.getElementById('patientPickerBox').style.display = 'none';
+
+        hideCreateError();
+    }
+
+    function pickPatient_noNav(p) {
+        document.getElementById('create_patient_id').value = p.id;
+        document.getElementById('patientSearchInput').value = p.name;
+        document.getElementById('selectedPatientName').textContent = p.name;
+        document.getElementById('selectedPatientMeta').textContent =
+            [p.age ? p.age + ' y/o' : '', p.gender, p.phone].filter(Boolean).join(' • ');
+        document.getElementById('selectedPatientAvatar').textContent = p.initial || '?';
+        document.getElementById('selectedPatientAvatar').className =
+            'vl-avatar' + (p.genderCode === 'F' ? ' female' : '');
+        document.getElementById('selectedPatientBox').classList.add('show');
+        document.getElementById('patientPickerBox').style.display = 'none';
+    }
+
+    function clearPatient() {
+        document.getElementById('create_patient_id').value = '';
+        document.getElementById('selectedPatientBox').classList.remove('show');
+        document.getElementById('patientPickerBox').style.display = 'block';
+        document.getElementById('newPatientFields').classList.remove('open');
+        hideExistingWarning();
+        hideCreateError();
+        npLastFound = null;
+        if (patientDropdown) patientDropdown.reset();
+    }
+
+    function toggleNewPatient() {
+        const fields = document.getElementById('newPatientFields');
+        const chevron = document.getElementById('newPatientChevron');
+        fields.classList.toggle('open');
+        chevron.style.transform = fields.classList.contains('open') ? 'rotate(180deg)' : 'rotate(0)';
+        if (!fields.classList.contains('open')) hideExistingWarning();
+    }
+
+    function selectTemplate(card, id) {
+        document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        selectedTemplateId = id;
+        document.getElementById('selectedTemplateId').value = id;
+    }
+
+    function buildComboHtml(name, label, icon, options, currentValue) {
+        const v = (currentValue !== undefined && currentValue !== null) ? currentValue : '';
+        return `
+            <div class="combo-wrap" data-combo-name="${name}">
+                <label class="combo-label">${icon} ${label}</label>
+                <div class="combo-input-wrap">
+                    <input type="text" class="combo-input"
+                           placeholder="Search or type..."
+                           value="${escapeHtml(v)}" autocomplete="off">
+                    <i class="bi bi-chevron-down combo-arrow"></i>
+                </div>
+                <input type="hidden" name="${name}[]" class="combo-hidden" value="${escapeHtml(v)}">
+                <div class="combo-menu"></div>
+            </div>`;
+    }
+
+    function initCombo(container) {
+        container.querySelectorAll('.combo-wrap').forEach(wrap => {
+            const name = wrap.dataset.comboName;
+            const input = wrap.querySelector('.combo-input');
+            const hidden = wrap.querySelector('.combo-hidden');
+            const menu = wrap.querySelector('.combo-menu');
+
+            let options = [];
+            if (name === 'dose')           options = DOSES.map(d => ({ v: d, l: d }));
+            else if (name === 'frequency') options = FREQUENCIES;
+            else if (name === 'timing')    options = TIMINGS;
+            else if (name === 'route')     options = ROUTES;
+            else if (name === 'duration')  options = DURATIONS.map(d => ({ v: d, l: d }));
+
+            let selectedValue = hidden.value;
+            let highlightedIndex = -1;
+
+            function renderMenu() {
+                const query = input.value.trim().toLowerCase();
+                const matches = options.filter(opt =>
+                    opt.l.toLowerCase().includes(query) || opt.v.toLowerCase().includes(query)
+                );
+                let html = '';
+                if (matches.length === 0) {
+                    html += '<div class="combo-empty">No results</div>';
+                } else {
+                    html += matches.map((opt, idx) =>
+                        `<div class="combo-item ${opt.v === selectedValue ? 'selected' : ''} ${idx === highlightedIndex ? 'highlighted' : ''}"
+                             data-value="${escapeHtml(opt.v)}">${escapeHtml(opt.l)}</div>`
+                    ).join('');
+                }
+                if (input.value.trim()) {
+                    const exact = options.find(o => o.l.toLowerCase() === query || o.v.toLowerCase() === query);
+                    if (!exact) {
+                        html += `<div class="combo-custom-hint" data-custom-value="${escapeHtml(input.value)}">
+                                    <i class="bi bi-pencil-fill"></i>
+                                    Use: "<strong>${escapeHtml(input.value)}</strong>"
+                                 </div>`;
+                    }
+                }
+                menu.innerHTML = html;
+                menu.querySelectorAll('.combo-item').forEach(el => {
+                    el.addEventListener('click', () => selectValue(el.dataset.value));
+                });
+                const customHint = menu.querySelector('.combo-custom-hint');
+                if (customHint) {
+                    customHint.addEventListener('click', () => selectCustom(customHint.dataset.customValue));
+                }
+            }
+
+            function open() { wrap.classList.add('open'); renderMenu(); }
+            function close() { wrap.classList.remove('open'); highlightedIndex = -1; }
+            function selectValue(value) {
+                selectedValue = value;
+                hidden.value = value;
+                const opt = options.find(o => o.v === value);
+                input.value = opt ? opt.l : value;
+                close();
+            }
+            function selectCustom(text) {
+                selectedValue = text;
+                hidden.value = text;
+                input.value = text;
+                close();
+            }
+
+            input.addEventListener('focus', open);
+            input.addEventListener('input', () => {
+                hidden.value = input.value;
+                selectedValue = input.value;
+                highlightedIndex = -1;
+                open();
+            });
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); }
+                if (!wrap.classList.contains('open')) {
+                    if (e.key === 'ArrowDown' || e.key === 'Enter') { open(); return; }
+                    return;
+                }
+                const items = menu.querySelectorAll('.combo-item');
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    highlightedIndex = Math.min(highlightedIndex + 1, items.length - 1);
+                    renderMenu();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    highlightedIndex = Math.max(highlightedIndex - 1, -1);
+                    renderMenu();
+                } else if (e.key === 'Enter') {
+                    if (highlightedIndex >= 0 && items[highlightedIndex]) {
+                        selectValue(items[highlightedIndex].dataset.value);
+                    } else {
+                        selectCustom(input.value);
+                    }
+                } else if (e.key === 'Escape') {
+                    close(); input.blur();
+                }
+            });
+            document.addEventListener('click', (e) => {
+                if (!wrap.contains(e.target)) close();
+            });
+            renderMenu();
+        });
+    }
+
+    function initMedSearchDropdown(rowElement, onSelect) {
+        const wrap = rowElement.querySelector('.med-search-wrap');
+        const input = wrap.querySelector('.med-search-input');
+        const hidden = wrap.querySelector('.med-search-hidden');
+        const menu = wrap.querySelector('.med-search-menu');
+
+        let selectedId = null;
+        let highlightedIndex = -1;
+        let filteredData = [...MEDICATIONS_DATA];
+
+        function renderMenu() {
+            if (filteredData.length === 0) {
+                menu.innerHTML = '<div class="sd-empty"><i class="bi bi-search"></i>No medication found</div>';
+                return;
+            }
+            const limited = filteredData.slice(0, 40);
+
+            menu.innerHTML = limited.map((item, idx) => {
+                const initial = (item.name || '?').charAt(0).toUpperCase();
+                const favClass = item.is_favorite ? 'is-favorite' : '';
+                const starHtml = item.is_favorite
+                    ? '<i class="bi bi-star-fill med-fav-star"></i>'
+                    : '';
+                return `
+                    <div class="sd-item ${favClass} ${selectedId === item.id ? 'selected' : ''} ${idx === highlightedIndex ? 'highlighted' : ''}"
+                         data-id="${item.id}">
+                        <div class="sd-item-avatar">${escapeHtml(initial)}</div>
+                        <div class="sd-item-info">
+                            <div class="sd-item-name">${starHtml}${escapeHtml(item.full_name || item.name)}</div>
+                            <div class="sd-item-meta">
+                                ${item.form ? escapeHtml(item.form) : ''}${item.generic_name ? ' • ' + escapeHtml(item.generic_name) : ''}
+                            </div>
+                        </div>
+                    </div>`;
+            }).join('');
+
+            menu.querySelectorAll('.sd-item').forEach(el => {
+                el.addEventListener('click', () => selectItem(parseInt(el.dataset.id)));
+            });
+        }
+        function open() { wrap.classList.add('open'); renderMenu(); }
+        function close() { wrap.classList.remove('open'); highlightedIndex = -1; }
+
+        function filter() {
+            const q = input.value.trim().toLowerCase();
+            if (!q) filteredData = [...MEDICATIONS_DATA];
+            else filteredData = MEDICATIONS_DATA.filter(item => {
+                const t = `${item.name} ${item.full_name} ${item.generic_name} ${item.manufacturer}`.toLowerCase();
+                return t.includes(q);
+            });
+            highlightedIndex = -1;
+            renderMenu();
+            open();
+        }
+
+        function selectItem(id) {
+            const item = MEDICATIONS_DATA.find(m => m.id === id);
+            if (!item) return;
+            selectedId = id;
+            hidden.value = id;
+
+            const displayName = item.full_name || item.name;
+            input.value = item.is_favorite ? '⭐ ' + displayName : displayName;
+
+            close();
+            rowElement.classList.add('filled');
+            if (typeof onSelect === 'function') onSelect(item);
+        }
+
+        input.addEventListener('focus', open);
+        input.addEventListener('input', filter);
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); }
+            if (!wrap.classList.contains('open')) {
+                if (e.key === 'ArrowDown' || e.key === 'Enter') { open(); return; }
+                return;
+            }
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                highlightedIndex = Math.min(highlightedIndex + 1, Math.min(filteredData.length - 1, 39));
+                renderMenu();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                highlightedIndex = Math.max(highlightedIndex - 1, -1);
+                renderMenu();
+            } else if (e.key === 'Enter') {
+                if (highlightedIndex >= 0 && filteredData[highlightedIndex]) {
+                    selectItem(filteredData[highlightedIndex].id);
+                } else if (filteredData.length > 0) {
+                    selectItem(filteredData[0].id);
+                }
+            } else if (e.key === 'Escape') {
+                close(); input.blur();
+            }
+        });
+        document.addEventListener('click', (e) => {
+            if (!wrap.contains(e.target)) close();
+        });
+        renderMenu();
+        return { selectItem };
+    }
+
+    function addMedRow(data) {
+        data = data || {};
+        const container = document.getElementById('medicineRows');
+        const idx = medCounter++;
+
+        const row = document.createElement('div');
+        row.className = 'med-item-row';
+        if (data.medication_id) row.classList.add('filled');
+        row.dataset.medIndex = idx;
+
+        const doseDisplay = data.dose || '';
+        const freqDisplay = resolveDisplay(data.frequency, FREQUENCIES);
+        const timingDisplay = resolveDisplay(data.timing, TIMINGS);
+        const routeDisplay = resolveDisplay(data.route || 'oral', ROUTES);
+        const durationDisplay = data.duration || '';
+        const quantityDisplay = data.quantity || '';
+
+        const medObj = data.medication_id
+            ? MEDICATIONS_DATA.find(m => m.id == data.medication_id)
+            : null;
+
+        const medName = data.medication_name
+            || (medObj ? (medObj.full_name || medObj.name) : '')
+            || '';
+
+        const medIsFav = medObj ? !!medObj.is_favorite : false;
+        const medNameWithStar = medIsFav ? '⭐ ' + medName : medName;
+
+        row.innerHTML = `
+            <span class="med-num-badge">${container.children.length + 1}</span>
+            <button type="button" class="remove-btn" title="Remove"><i class="bi bi-x-lg"></i></button>
+
+            <div class="med-search-wrap">
+                <label><i class="bi bi-search"></i> MEDICINE</label>
+                <input type="text" class="med-search-input"
+                       placeholder="Search or select medicine..."
+                       value="${escapeHtml(medNameWithStar)}"
+                       autocomplete="off">
+                <i class="bi bi-chevron-down med-search-arrow"></i>
+                <input type="hidden" name="medication[]" class="med-search-hidden" value="${data.medication_id || ''}">
+                <div class="med-search-menu"></div>
+            </div>
+
+            <div class="med-combos-row">
+                ${buildComboHtml('dose', 'DOSE', '<i class="bi bi-123"></i>', DOSES.map(d => ({v: d, l: d})), doseDisplay)}
+                ${buildComboHtml('frequency', 'FREQUENCY', '<i class="bi bi-clock"></i>', FREQUENCIES, freqDisplay)}
+            </div>
+
+            <div class="med-combos-row">
+                ${buildComboHtml('timing', 'TIMING', '<i class="bi bi-clock-history"></i>', TIMINGS, timingDisplay)}
+                ${buildComboHtml('route', 'ROUTE', '<i class="bi bi-capsule"></i>', ROUTES, routeDisplay)}
+            </div>
+
+            <div class="med-combos-row">
+                ${buildComboHtml('duration', 'DURATION', '<i class="bi bi-calendar-range"></i>', DURATIONS.map(d => ({v: d, l: d})), durationDisplay)}
+
+                <div class="med-quantity-wrap">
+                    <label class="combo-label"><i class="bi bi-hash"></i> QUANTITY (n)</label>
+                    <input type="number"
+                           name="quantity[]"
+                           class="med-quantity-input"
+                           min="1"
+                           placeholder="مثلاً 2"
+                           value="${escapeHtml(quantityDisplay)}"
+                           autocomplete="off">
+                    <div class="med-quantity-hint">تعداد کل از این دوا</div>
+                </div>
+            </div>
+        `;
+
+        container.appendChild(row);
+
+        row.querySelector('.remove-btn').addEventListener('click', () => {
+            row.remove();
+            renumberMeds();
+        });
+
+        initCombo(row);
+
+        function setComboValue(fieldName, value) {
+            const wrap = row.querySelector(`.combo-wrap[data-combo-name="${fieldName}"]`);
+            if (!wrap) return;
+            const input = wrap.querySelector('.combo-input');
+            const hidden = wrap.querySelector('.combo-hidden');
+            let options = [];
+            if (fieldName === 'dose')           options = DOSES.map(d => ({ v: d, l: d }));
+            else if (fieldName === 'frequency') options = FREQUENCIES;
+            else if (fieldName === 'timing')    options = TIMINGS;
+            else if (fieldName === 'route')     options = ROUTES;
+            else if (fieldName === 'duration')  options = DURATIONS.map(d => ({ v: d, l: d }));
+            const opt = options.find(o => o.v === value);
+            input.value = opt ? opt.l : value;
+            hidden.value = value;
+        }
+
+        const searchApi = initMedSearchDropdown(row, (med) => {
+            if (med.default_dose)      setComboValue('dose', med.default_dose);
+            if (med.default_frequency) setComboValue('frequency', med.default_frequency);
+            if (med.default_timing)    setComboValue('timing', med.default_timing);
+            if (med.default_route)     setComboValue('route', med.default_route);
+            if (med.default_duration)  setComboValue('duration', med.default_duration);
+        });
+
+        if (data.medication_id) {
+            setTimeout(() => searchApi.selectItem(parseInt(data.medication_id)), 50);
+        }
+    }
+
+    function resolveDisplay(value, options) {
+        if (!value) return '';
+        const opt = options.find(o => o.v === value);
+        return opt ? opt.l : value;
+    }
+
+    function renumberMeds() {
+        const container = document.getElementById('medicineRows');
+        Array.from(container.children).forEach((row, i) => {
+            const num = row.querySelector('.med-num-badge');
+            if (num) num.textContent = i + 1;
+        });
+    }
+
+    function clearMeds() {
+        document.getElementById('medicineRows').innerHTML = '';
+        medCounter = 0;
+    }
+
+    function applyReady(id) {
+        const url = READY_API_URL.replace('999999', id);
+        fetch(url)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) {
+                    showCreateError('Failed to load ready prescription.');
+                    return;
+                }
+                const rp = data.ready;
+                clearMeds();
+
+                const set = (elId, val) => {
+                    const el = document.getElementById(elId);
+                    if (el && !el.value) el.value = val || '';
+                };
+                set('f_signs_symptoms', rp.signs_symptoms);
+                set('f_diagnosis', rp.diagnosis);
+                set('f_impression', rp.impression);
+                set('f_doctor_note', rp.doctor_note);
+                set('f_advice_text', rp.advice);
+
+                const meds = rp.medications || [];
+                if (meds.length === 0) {
+                    addMedRow();
+                } else {
+                    meds.forEach(m => {
+                        addMedRow({
+                            medication_id: m.medication_id,
+                            medication_name: m.drug_name || '',
+                            dose: m.dose || '',
+                            frequency: m.frequency || '',
+                            timing: m.timing || '',
+                            route: m.route || 'oral',
+                            duration: m.duration || '',
+                            quantity: m.quantity || '',
+                        });
+                    });
+                }
+
+                const medsSection = document.getElementById('medicineRows');
+                if (medsSection) medsSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                showCreateError('');
+            })
+            .catch(err => {
+                console.error('applyReady error:', err);
+                showCreateError('Network error.');
+            });
+    }
+
+    function openCreateModal() {
+        const form = document.getElementById('createForm');
+        form.reset();
+
+        document.getElementById('formAction').value = 'create';
+        document.getElementById('formPrescriptionId').value = '';
+        document.getElementById('modalTitle').innerHTML = '<i class="bi bi-plus-circle-fill"></i> نسخه جدید';
+        document.getElementById('submitBtn').innerHTML = '<i class="bi bi-printer-fill"></i> ذخیره و چاپ';
+
+        clearPatient();
+        clearMeds();
+        addMedRow();
+        hideCreateError();
+        hideExistingWarning();
+
+        document.querySelectorAll('.template-card').forEach(c => {
+            c.classList.toggle('selected', c.dataset.id == selectedTemplateId);
+        });
+        document.getElementById('selectedTemplateId').value = selectedTemplateId || '';
+
+        new bootstrap.Modal(document.getElementById('createModal')).show();
+    }
+
+    function editPrescription(id) {
+        const url = PRESCRIPTION_API_URL.replace('999999', id);
+        fetch(url)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) {
+                    showCreateError('Failed to load prescription.');
+                    new bootstrap.Modal(document.getElementById('createModal')).show();
+                    return;
+                }
+                const rx = data.prescription;
+
+                const form = document.getElementById('createForm');
+                form.reset();
+
+                document.getElementById('formAction').value = 'update';
+                document.getElementById('formPrescriptionId').value = rx.id;
+                document.getElementById('modalTitle').innerHTML = '<i class="bi bi-pencil-fill"></i> ویرایش نسخه — ' + rx.prescription_number;
+                document.getElementById('submitBtn').innerHTML = '<i class="bi bi-printer-fill"></i> ذخیره و چاپ';
+
+                const patientInfo = {
+                    id: rx.patient_id,
+                    name: rx.patient_name,
+                    age: rx.patient_age,
+                    gender: rx.patient_gender,
+                    phone: rx.patient_phone,
+                    genderCode: rx.patient_gender_code || '',
+                    initial: (rx.patient_name || '?').charAt(0).toUpperCase()
+                };
+                pickPatient_noNav(patientInfo);
+                document.getElementById('create_patient_id').value = rx.patient_id;
+
+                selectedTemplateId = rx.template_id;
+                document.getElementById('selectedTemplateId').value = rx.template_id || '';
+                document.querySelectorAll('.template-card').forEach(c => {
+                    c.classList.toggle('selected', c.dataset.id == rx.template_id);
+                });
+
+                if (rx.prescription_date) document.getElementById('prescriptionDate').value = rx.prescription_date;
+
+                document.getElementById('f_signs_symptoms').value = rx.signs_symptoms || '';
+                document.getElementById('f_diagnosis').value = rx.diagnosis || '';
+                document.getElementById('f_impression').value = rx.impression || '';
+                document.getElementById('f_doctor_note').value = rx.doctor_note || '';
+
+                document.getElementById('f_blood_pressure').value = rx.blood_pressure || '';
+                document.getElementById('f_pulse').value = rx.pulse || '';
+                document.getElementById('f_respiratory_rate').value = rx.respiratory_rate || '';
+                document.getElementById('f_temperature').value = rx.temperature || '';
+                document.getElementById('f_spo2').value = rx.spo2 || '';
+                document.getElementById('f_weight').value = rx.weight || '';
+                document.getElementById('f_height').value = rx.height || '';
+
+                document.getElementById('f_advice_text').value = (rx.advice_items || []).join('\n');
+
+                clearMeds();
+                if (rx.items && rx.items.length > 0) {
+                    rx.items.forEach(item => addMedRow({
+                        medication_id: item.medication_id,
+                        medication_name: item.drug_name || '',
+                        dose: item.dose,
+                        frequency: item.frequency,
+                        timing: item.timing,
+                        route: item.route,
+                        duration: item.duration,
+                        quantity: item.quantity,
+                    }));
+                } else {
+                    addMedRow();
+                }
+
+                hideCreateError();
+                hideExistingWarning();
+                new bootstrap.Modal(document.getElementById('createModal')).show();
+            })
+            .catch(err => {
+                console.error(err);
+                showCreateError('Network error.');
+                new bootstrap.Modal(document.getElementById('createModal')).show();
+            });
+    }
+
+    function viewPrescription(id) {
+        const url = PRESCRIPTION_API_URL.replace('999999', id);
+        const body = document.getElementById('viewModalBody');
+        body.innerHTML = `
+            <div style="text-align:center;padding:40px;">
+                <i class="bi bi-hourglass-split" style="font-size:36px;color:#dc2626;"></i>
+                <p style="margin-top:12px;color:#6b7280;">در حال بارگذاری...</p>
+            </div>`;
+        new bootstrap.Modal(document.getElementById('viewModal')).show();
+
+        fetch(url)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) {
+                    body.innerHTML = '<p style="text-align:center;color:#dc2626;">خطا در بارگذاری</p>';
+                    return;
+                }
+                const rx = data.prescription;
+                const items = rx.items || [];
+                let medsHtml = items.length === 0
+                    ? '<p style="color:#94a3b8;font-style:italic;">No medications</p>'
+                    : items.map((it, i) => {
+                        const qtyBadge = it.quantity
+                            ? `<span class="med-qty-badge-view">n=${escapeHtml(String(it.quantity))}</span>`
+                            : '';
+                        return `
+                        <div style="padding:12px 0;border-bottom:1px dashed #f1f5f9;">
+                            <div style="font-weight:700;color:#0f172a;font-size:15.5px;display:flex;align-items:center;flex-wrap:wrap;">
+                                <span>${i + 1}. ${escapeHtml(it.drug_name || '—')}</span>
+                                ${qtyBadge}
+                            </div>
+                            <div style="font-size:13.5px;color:#64748b;margin-top:5px;">
+                                ${[it.dose, it.frequency_display || it.frequency, it.timing_display || it.timing, it.route_display || it.route, it.duration].filter(Boolean).map(escapeHtml).join(' • ')}
+                            </div>
+                        </div>
+                    `;
+                    }).join('');
+
+                const row = (lbl, val) => val
+                    ? `<div class="view-row"><span class="lbl">${lbl}</span><span class="val">${escapeHtml(val)}</span></div>`
+                    : `<div class="view-row"><span class="lbl">${lbl}</span><span class="val empty">—</span></div>`;
+
+                body.innerHTML = `
+                    <div class="vl-modal-section highlight">
+                        <div class="vl-modal-section-title">
+                            <span class="icon-box"><i class="bi bi-person-fill"></i></span>
+                            Patient — مریض
+                        </div>
+                        ${row('Name', rx.patient_name)}
+                        ${row('Age', rx.patient_age)}
+                        ${row('Gender', rx.patient_gender)}
+                        ${row('Phone', rx.patient_phone)}
+                    </div>
+
+                    <div class="vl-modal-section highlight">
+                        <div class="vl-modal-section-title">
+                            <span class="icon-box"><i class="bi bi-clipboard2-pulse-fill"></i></span>
+                            Clinical — اطلاعات بالینی
+                        </div>
+                        ${row('Signs', rx.signs_symptoms)}
+                        ${row('Diagnosis', rx.diagnosis)}
+                        ${row('Impression', rx.impression)}
+                        ${row('Doctor Note', rx.doctor_note)}
+                    </div>
+
+                    <div class="vl-modal-section highlight">
+                        <div class="vl-modal-section-title">
+                            <span class="icon-box"><i class="bi bi-heart-pulse-fill"></i></span>
+                            Vital Signs
+                        </div>
+                        ${row('BP', rx.blood_pressure)}
+                        ${row('Pulse', rx.pulse)}
+                        ${row('RR', rx.respiratory_rate)}
+                        ${row('Temp', rx.temperature)}
+                        ${row('SpO₂', rx.spo2)}
+                        ${row('Weight', rx.weight)}
+                        ${row('Height', rx.height)}
+                    </div>
+
+                    <div class="vl-modal-section highlight">
+                        <div class="vl-modal-section-title">
+                            <span class="icon-box"><i class="bi bi-capsule"></i></span>
+                            Medications (${items.length})
+                        </div>
+                        ${medsHtml}
+                    </div>
+
+                    ${rx.advice_items && rx.advice_items.length
+                        ? `<div class="vl-modal-section highlight">
+                               <div class="vl-modal-section-title">
+                                   <span class="icon-box"><i class="bi bi-chat-left-text-fill"></i></span>
+                                   Advice — توصیه‌ها
+                               </div>
+                               <div style="white-space:pre-wrap;font-size:15px;line-height:1.9;">${escapeHtml(rx.advice_items.join('\n'))}</div>
+                           </div>`
+                        : ''}
+                `;
+            })
+            .catch(err => {
+                console.error(err);
+                body.innerHTML = '<p style="text-align:center;color:#dc2626;">خطای شبکه</p>';
+            });
+    }
+
+    function confirmDelete(id, number, patientName) {
+        // ⭐ FIXED: set the hidden field value for the delete form
+        document.getElementById('deletePrescriptionId').value = id;
+        document.getElementById('deleteRxNumber').textContent = number;
+        document.getElementById('deletePatientName').textContent = patientName;
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    }
+</script>
+{% endblock %}

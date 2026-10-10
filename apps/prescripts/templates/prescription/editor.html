@@ -1,0 +1,1894 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ============================================================
+       Editor Layout
+       ============================================================ */
+    .ed-wrapper {
+        display: grid;
+        grid-template-columns: 240px 1fr 320px;
+        gap: 14px;
+        height: calc(100vh - 110px);
+        margin-top: 6px;
+    }
+
+    .ed-sidebar {
+        background: white;
+        border-radius: 14px;
+        border: 1.5px solid #e5e7eb;
+        overflow-y: auto;
+        padding: 14px;
+        position: relative;
+    }
+    .ed-sidebar::-webkit-scrollbar { width: 6px; }
+    .ed-sidebar::-webkit-scrollbar-thumb {
+        background: #cbd5e1; border-radius: 3px;
+    }
+
+    .ed-sidebar-title {
+        font-size: 12.5px;
+        font-weight: 800;
+        color: #7c3aed;
+        margin-bottom: 12px;
+        padding-bottom: 10px;
+        border-bottom: 1.5px dashed #e5e7eb;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    /* ============================================================
+       Field Palette
+       ============================================================ */
+    .ed-field-group { margin-bottom: 14px; }
+
+    .ed-field-group-title {
+        font-size: 11px;
+        font-weight: 800;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 6px;
+        padding-right: 4px;
+    }
+
+    .ed-field-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        padding: 8px 10px;
+        background: #f9fafb;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #334155;
+        cursor: pointer;
+        transition: all 0.15s;
+        margin-bottom: 5px;
+        text-align: right;
+        font-family: inherit;
+    }
+    .ed-field-btn:hover {
+        background: #f5f3ff;
+        border-color: #c4b5fd;
+        color: #7c3aed;
+        transform: translateX(-3px);
+    }
+    .ed-field-btn i { font-size: 14px; color: #7c3aed; }
+
+    /* ============================================================
+       Canvas Area
+       ============================================================ */
+    .ed-canvas-area {
+        background: #f1f5f9;
+        border-radius: 14px;
+        border: 1.5px solid #e5e7eb;
+        overflow: auto;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 24px;
+        position: relative;
+    }
+    .ed-canvas-area::-webkit-scrollbar { width: 10px; height: 10px; }
+    .ed-canvas-area::-webkit-scrollbar-thumb {
+        background: #cbd5e1; border-radius: 5px;
+    }
+
+    .ed-canvas-wrapper {
+        position: relative;
+        transform-origin: top center;
+        transition: transform 0.15s ease;
+    }
+
+    .ed-canvas {
+        position: relative;
+        background: white;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        border-radius: 4px;
+        user-select: none;
+    }
+
+    .ed-canvas img.ed-bg {
+        display: block;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        user-select: none;
+    }
+
+    /* ============================================================
+       Field Element
+       ============================================================ */
+    .ed-element {
+        position: absolute;
+        display: inline-block;
+        width: fit-content;
+        min-width: 16px;
+        padding: 2px 4px;
+        box-sizing: border-box;
+        cursor: move;
+        user-select: none;
+        line-height: 1.3;
+        white-space: nowrap;
+        border-radius: 3px;
+        z-index: 5;
+    }
+    .ed-element.selected { z-index: 50; }
+    .ed-element.dragging {
+        cursor: grabbing;
+        opacity: 0.85;
+        z-index: 9999;
+    }
+    .ed-element.has-fixed-width {
+        white-space: normal !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+        overflow: visible !important;
+    }
+    .ed-element.justify-text {
+        text-align: justify !important;
+        text-justify: inter-word;
+    }
+    .ed-element.copy-source {
+        outline: 3px dashed #f59e0b;
+        outline-offset: 2px;
+    }
+
+    /* ============================================================
+       Medicine Table Preview
+       ============================================================ */
+    .ed-medicine-table {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .ed-medicine-row {
+        border: 1.5px solid #cbd5e1;
+        border-radius: 6px;
+        padding: 10px 12px;
+        background: rgba(255,255,255,0.55);
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        position: relative;
+    }
+    .ed-medicine-row .med-first-line {
+        display: flex;
+        flex-direction: row;
+        align-items: baseline;
+        gap: 8px;
+        margin-bottom: 0;
+        flex-wrap: wrap;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+    }
+    .ed-medicine-row .med-number {
+        font-weight: 700;
+        font-size: 1em;
+        color: #dc2626;
+        flex-shrink: 0;
+    }
+    .ed-medicine-row .med-name {
+        font-weight: 700;
+        font-size: 1.02em;
+        color: #0f172a;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+    /* ⭐ Quantity badge — right side of the name */
+    .ed-medicine-row .med-qty-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #fee2e2;
+        border: 1.5px solid #dc2626;
+        color: #991b1b;
+        font-weight: 800;
+        font-size: 0.85em;
+        padding: 3px 10px;
+        border-radius: 20px;
+        margin-right: auto;
+        flex-shrink: 0;
+        letter-spacing: 0.3px;
+        direction: ltr;
+    }
+    .ed-medicine-row .med-meta-line {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        font-size: 0.85em;
+        color: #334155;
+        font-weight: 500;
+        margin-top: 0;
+        margin-bottom: 6px;
+        line-height: 1.3;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+    }
+    .ed-medicine-row .med-meta-line .med-generic {
+        color: #334155;
+        font-weight: 600;
+    }
+    .ed-medicine-row .med-meta-line .med-manufacturer {
+        color: #334155;
+        font-weight: 500;
+    }
+    .ed-medicine-row .med-meta-line .med-brand {
+        color: #7c3aed;
+        font-style: italic;
+        font-weight: 600;
+    }
+    .ed-medicine-row .med-specs {
+        font-size: 0.88em;
+        opacity: 0.9;
+        color: #475569;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+    }
+
+    /* ============================================================
+       Selection Overlay
+       ============================================================ */
+    .ed-selection-overlay {
+        position: absolute;
+        pointer-events: none;
+        z-index: 5000;
+        display: none;
+    }
+    .ed-selection-overlay.active { display: block; }
+
+    .ed-selection-box {
+        position: absolute;
+        border: 2px solid #7c3aed;
+        pointer-events: none;
+        box-shadow: 0 0 0 1px rgba(255,255,255,0.8) inset,
+                    0 0 0 1px rgba(124,58,237,0.3);
+        border-radius: 3px;
+    }
+
+    .ed-handle {
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        background: white;
+        border: 2px solid #7c3aed;
+        border-radius: 50%;
+        pointer-events: all;
+        cursor: pointer;
+        z-index: 5001;
+        box-sizing: border-box;
+        transition: transform 0.1s, background 0.1s;
+    }
+    .ed-handle:hover {
+        background: #7c3aed;
+        transform: scale(1.25);
+    }
+    .ed-handle.nw { top: -6px; left: -6px; cursor: nwse-resize; }
+    .ed-handle.n  { top: -6px; left: 50%; margin-left: -6px; cursor: ns-resize; }
+    .ed-handle.ne { top: -6px; right: -6px; cursor: nesw-resize; }
+    .ed-handle.w  { top: 50%; left: -6px; margin-top: -6px; cursor: ew-resize; }
+    .ed-handle.e  { top: 50%; right: -6px; margin-top: -6px; cursor: ew-resize; }
+    .ed-handle.sw { bottom: -6px; left: -6px; cursor: nesw-resize; }
+    .ed-handle.s  { bottom: -6px; left: 50%; margin-left: -6px; cursor: ns-resize; }
+    .ed-handle.se { bottom: -6px; right: -6px; cursor: nwse-resize; }
+
+    /* ============================================================
+       Toolbar
+       ============================================================ */
+    .ed-toolbar {
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: white;
+        border-radius: 12px;
+        padding: 6px 10px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+        display: flex;
+        gap: 4px;
+        z-index: 200;
+        align-items: center;
+    }
+    .ed-tool-btn {
+        width: 32px; height: 32px;
+        border-radius: 7px;
+        border: none;
+        background: #f3f4f6;
+        color: #475569;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        transition: all 0.15s;
+    }
+    .ed-tool-btn:hover { background: #7c3aed; color: white; }
+    .ed-tool-btn.danger:hover { background: #dc2626; }
+    .ed-tool-sep {
+        width: 1px; height: 20px;
+        background: #e5e7eb; margin: 0 2px;
+    }
+    .ed-zoom-label {
+        font-size: 11.5px;
+        font-weight: 700;
+        color: #64748b;
+        padding: 0 4px;
+        min-width: 40px;
+        text-align: center;
+    }
+
+    /* ============================================================
+       Inspector
+       ============================================================ */
+    .ed-inspector-section {
+        margin-bottom: 14px;
+        padding-bottom: 12px;
+        border-bottom: 1.5px dashed #e5e7eb;
+    }
+    .ed-inspector-section:last-child { border-bottom: none; }
+
+    .ed-inspector-title {
+        font-size: 11.5px;
+        font-weight: 800;
+        color: #7c3aed;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .ed-input-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        margin-bottom: 6px;
+    }
+
+    .ed-input-group { margin-bottom: 8px; }
+
+    .ed-label {
+        display: block;
+        font-size: 11px;
+        font-weight: 700;
+        color: #475569;
+        margin-bottom: 3px;
+    }
+
+    .ed-input {
+        width: 100%;
+        padding: 6px 9px;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 7px;
+        font-size: 12px;
+        font-family: inherit;
+        background: #f9fafb;
+        transition: all 0.15s;
+        box-sizing: border-box;
+    }
+    .ed-input:focus {
+        outline: none;
+        border-color: #7c3aed;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(124,58,237,0.1);
+    }
+    .ed-input[type="color"] {
+        padding: 2px;
+        height: 30px;
+        cursor: pointer;
+    }
+    .ed-input[type="checkbox"] {
+        width: auto;
+        accent-color: #7c3aed;
+        cursor: pointer;
+    }
+
+    .ed-checkbox-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .ed-checkbox-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        background: #f9fafb;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        color: #334155;
+        transition: all 0.15s;
+    }
+    .ed-checkbox-item:hover {
+        background: #f5f3ff;
+        border-color: #c4b5fd;
+    }
+    .ed-checkbox-item input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        accent-color: #7c3aed;
+        cursor: pointer;
+    }
+    /* ⭐ Highlight the quantity checkbox */
+    .ed-checkbox-item.qty-highlight {
+        background: #fef2f2;
+        border-color: #fca5a5;
+    }
+    .ed-checkbox-item.qty-highlight:hover {
+        background: #fee2e2;
+        border-color: #dc2626;
+    }
+    .ed-checkbox-item.qty-highlight input[type="checkbox"] {
+        accent-color: #dc2626;
+    }
+
+    .ed-font-preview {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        background: #f5f3ff;
+        border: 1.5px dashed #c4b5fd;
+        border-radius: 8px;
+        font-size: 14px;
+        color: #5b21b6;
+        margin-top: 6px;
+        text-align: center;
+        justify-content: center;
+        direction: rtl;
+    }
+
+    .ed-style-btns {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        margin-bottom: 10px;
+    }
+    .ed-style-btn {
+        padding: 8px;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 8px;
+        background: white;
+        font-size: 11.5px;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        font-family: inherit;
+        transition: all 0.15s;
+        color: #475569;
+    }
+    .ed-style-btn:hover {
+        background: #f5f3ff;
+        border-color: #c4b5fd;
+        color: #7c3aed;
+    }
+    .ed-style-btn.copy { color: #d97706; border-color: #fcd34d; }
+    .ed-style-btn.copy:hover { background: #fef3c7; }
+    .ed-style-btn.paste { color: #059669; border-color: #86efac; }
+    .ed-style-btn.paste:hover { background: #dcfce7; }
+    .ed-style-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    .ed-btn-danger {
+        width: 100%;
+        padding: 9px;
+        background: linear-gradient(135deg, #dc2626, #991b1b);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 12.5px;
+        cursor: pointer;
+        font-family: inherit;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        margin-top: 8px;
+    }
+    .ed-btn-danger:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 14px rgba(220,38,38,0.35);
+    }
+
+    .ed-empty-inspector {
+        text-align: center;
+        padding: 40px 10px;
+        color: #94a3b8;
+        font-size: 12px;
+    }
+    .ed-empty-inspector i {
+        font-size: 34px;
+        display: block;
+        margin-bottom: 10px;
+        opacity: 0.5;
+    }
+
+    .ed-save-bar {
+        position: fixed;
+        bottom: 18px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: white;
+        border-radius: 12px;
+        padding: 7px 12px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        z-index: 1000;
+    }
+    .ed-save-status {
+        font-size: 12px;
+        font-weight: 700;
+        color: #64748b;
+        padding: 0 6px;
+    }
+    .ed-save-status.saved { color: #059669; }
+    .ed-save-status.error { color: #dc2626; }
+    .ed-save-status.saving { color: #d97706; }
+
+    .ed-btn-save {
+        padding: 8px 18px;
+        background: #059669;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 12.5px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-family: inherit;
+    }
+    .ed-btn-save:hover { background: #047857; }
+
+    .ed-btn-back {
+        padding: 8px 14px;
+        background: #f3f4f6;
+        color: #334155;
+        border: none;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 12.5px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .ed-btn-back:hover { background: #e5e7eb; color: #111827; }
+
+    @media (max-width: 1100px) {
+        .ed-wrapper { grid-template-columns: 200px 1fr 280px; }
+    }
+    @media (max-width: 900px) {
+        .ed-wrapper { grid-template-columns: 1fr; height: auto; }
+        .ed-sidebar { max-height: 300px; }
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<div class="ed-wrapper">
+
+<!-- ================= Palette ================= -->
+<div class="ed-sidebar">
+    <div class="ed-sidebar-title">
+        <i class="bi bi-grid-3x3-gap-fill"></i>
+        Add Field
+    </div>
+
+    <!-- PATIENT -->
+    <div class="ed-field-group">
+        <div class="ed-field-group-title">PATIENT</div>
+        <button class="ed-field-btn" onclick="addField('patient_name','Patient Name')">
+            <i class="bi bi-person-fill"></i>
+            <span>Patient Name</span>
+        </button>
+        <button class="ed-field-btn" onclick="addField('patient_father','Father Name')">
+            <i class="bi bi-person-lines-fill"></i>
+            <span>Father Name</span>
+        </button>
+        <button class="ed-field-btn" onclick="addField('patient_age','Age')">
+            <i class="bi bi-calendar-fill"></i>
+            <span>Age</span>
+        </button>
+        <button class="ed-field-btn" onclick="addField('patient_gender','Sex')">
+            <i class="bi bi-gender-ambiguous"></i>
+            <span>Sex</span>
+        </button>
+        <button class="ed-field-btn" onclick="addField('patient_phone','Phone Number')">
+            <i class="bi bi-telephone-fill"></i>
+            <span>Phone Number</span>
+        </button>
+        <button class="ed-field-btn" onclick="addField('patient_address','Address')">
+            <i class="bi bi-geo-alt-fill"></i>
+            <span>Address</span>
+        </button>
+        <button class="ed-field-btn" onclick="addField('patient_file','File Number')">
+            <i class="bi bi-file-earmark-fill"></i>
+            <span>File Number</span>
+        </button>
+    </div>
+
+    <!-- VITAL SIGNS -->
+    <div class="ed-field-group">
+        <div class="ed-field-group-title">VITAL SIGNS</div>
+        <button class="ed-field-btn" onclick="addField('vital_bp','Blood Pressure')">
+            <i class="bi bi-heart-pulse-fill"></i>
+            <span>Blood Pressure</span>
+        </button>
+        <button class="ed-field-btn" onclick="addField('vital_pr','Pulse Rate')">
+            <i class="bi bi-activity"></i>
+            <span>Pulse Rate</span>
+        </button>
+        <button class="ed-field-btn" onclick="addField('vital_rr','Respiratory Rate')">
+            <i class="bi bi-lungs-fill"></i>
+            <span>Respiratory Rate</span>
+        </button>
+        <button class="ed-field-btn" onclick="addField('vital_temp','Temperature')">
+            <i class="bi bi-thermometer-half"></i>
+            <span>Temperature</span>
+        </button>
+        <button class="ed-field-btn" onclick="addField('vital_spo2','Oxygen Saturation')">
+            <i class="bi bi-droplet-fill"></i>
+            <span>Oxygen Saturation</span>
+        </button>
+        <button class="ed-field-btn" onclick="addField('vital_weight','Weight')">
+            <i class="bi bi-speedometer2"></i>
+            <span>Weight</span>
+        </button>
+        <button class="ed-field-btn" onclick="addField('vital_height','Height')">
+            <i class="bi bi-rulers"></i>
+            <span>Height</span>
+        </button>
+        <button class="ed-field-btn" onclick="addField('vital_bmi','Body Mass Index')">
+            <i class="bi bi-calculator-fill"></i>
+            <span>Body Mass Index</span>
+        </button>
+    </div>
+
+    <!-- CLINICAL -->
+    <div class="ed-field-group">
+        <div class="ed-field-group-title">CLINICAL</div>
+        <button class="ed-field-btn" onclick="addField('signs_symptoms','Signs &amp; Symptoms')">
+            <i class="bi bi-journal-text"></i>
+            <span>Signs &amp; Symptoms</span>
+        </button>
+        <button class="ed-field-btn" onclick="addField('diagnosis','Diagnosis')">
+            <i class="bi bi-clipboard2-check-fill"></i>
+            <span>Diagnosis</span>
+        </button>
+        <button class="ed-field-btn" onclick="addField('impression','Impression')">
+            <i class="bi bi-chat-square-quote-fill"></i>
+            <span>Impression</span>
+        </button>
+        <button class="ed-field-btn" onclick="addField('doctor_note','Doctor Note')">
+            <i class="bi bi-sticky-fill"></i>
+            <span>Doctor Note</span>
+        </button>
+    </div>
+
+    <!-- ADVICE -->
+    <div class="ed-field-group">
+        <div class="ed-field-group-title">ADVICE</div>
+        <button class="ed-field-btn" onclick="addField('advice','Advice')">
+            <i class="bi bi-clipboard-check-fill"></i>
+            <span>Advice</span>
+        </button>
+    </div>
+
+    <!-- MEDICATIONS -->
+    <div class="ed-field-group">
+        <div class="ed-field-group-title">MEDICATIONS</div>
+        <button class="ed-field-btn" onclick="addField('medications_list','Medications')">
+            <i class="bi bi-capsule"></i>
+            <span>Medications</span>
+        </button>
+    </div>
+
+    <!-- IDENTIFIERS -->
+    <div class="ed-field-group">
+        <div class="ed-field-group-title">IDENTIFIERS</div>
+        <button class="ed-field-btn" onclick="addField('prescription_number','Prescription Number')">
+            <i class="bi bi-prescription2"></i>
+            <span>Prescription Number</span>
+        </button>
+        <button class="ed-field-btn" onclick="addField('prescription_date','Prescription Date')">
+            <i class="bi bi-calendar3"></i>
+            <span>Prescription Date</span>
+        </button>
+    </div>
+</div>
+
+<!-- ================= Canvas ================= -->
+<div class="ed-canvas-area" id="canvasArea">
+    <div class="ed-canvas-wrapper" id="canvasWrapper">
+        <div class="ed-canvas" id="canvas"
+             style="width: {{ template.canvas_width }}px; height: {{ template.canvas_height }}px;">
+
+            {% if template.background_image %}
+                <img class="ed-bg" id="canvasBg"
+                     src="{{ template.background_image.url }}"
+                     alt="{{ template.name }}"
+                     style="width: {{ template.canvas_width }}px; height: {{ template.canvas_height }}px;">
+            {% endif %}
+
+            <div class="ed-selection-overlay" id="selectionOverlay">
+                <div class="ed-selection-box" id="selectionBox"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="ed-toolbar">
+        <button class="ed-tool-btn" onclick="undo()" title="Undo (Ctrl+Z)">
+            <i class="bi bi-arrow-counterclockwise"></i>
+        </button>
+        <button class="ed-tool-btn" onclick="redo()" title="Redo (Ctrl+Y)">
+            <i class="bi bi-arrow-clockwise"></i>
+        </button>
+        <div class="ed-tool-sep"></div>
+        <button class="ed-tool-btn" onclick="zoomOut()" title="کوچک‌نمایی">
+            <i class="bi bi-zoom-out"></i>
+        </button>
+        <span class="ed-zoom-label" id="zoomLabel">100%</span>
+        <button class="ed-tool-btn" onclick="zoomIn()" title="بزرگ‌نمایی">
+            <i class="bi bi-zoom-in"></i>
+        </button>
+        <button class="ed-tool-btn" onclick="zoomReset()" title="بازنشانی">
+            <i class="bi bi-arrows-fullscreen"></i>
+        </button>
+        <div class="ed-tool-sep"></div>
+        <button class="ed-tool-btn danger" onclick="deleteSelected()" title="حذف (Delete)">
+            <i class="bi bi-trash-fill"></i>
+        </button>
+    </div>
+</div>
+
+
+<!-- ================= Inspector ================= -->
+<div class="ed-sidebar" id="inspector">
+    <div class="ed-sidebar-title">
+        <i class="bi bi-sliders"></i>
+        تنظیمات فیلد
+    </div>
+
+    <div id="inspectorContent">
+        <div class="ed-empty-inspector">
+            <i class="bi bi-hand-index-thumb"></i>
+            یک فیلد را انتخاب کنید<br>
+            تا تنظیمات آن نمایش داده شود
+        </div>
+    </div>
+</div>
+
+</div>
+
+
+<!-- ================= Save Bar ================= -->
+<div class="ed-save-bar">
+    <a href="{% url 'template_list' %}" class="ed-btn-back">
+        <i class="bi bi-arrow-right"></i> بازگشت
+    </a>
+    <span class="ed-save-status" id="saveStatus">آماده</span>
+    <button class="ed-btn-save" onclick="saveAll()">
+        <i class="bi bi-check-lg"></i> ذخیره
+    </button>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+
+<script id="editor-data" type="application/json">
+{
+    "template_id": {{ template.pk }},
+    "canvas_w": {{ template.canvas_width }},
+    "canvas_h": {{ template.canvas_height }},
+    "save_url": "{% url 'api_save_fields' template.pk %}",
+    "fields": {{ fields_json|safe|default:"[]" }},
+    "font_choices": {{ font_choices_json|safe|default:"[]" }},
+    "date_formats": {{ date_format_choices_json|safe|default:"[]" }},
+    "date_separators": {{ date_separator_choices_json|safe|default:"[]" }},
+    "preview_data": {{ preview_data_json|safe|default:"{}" }},
+    "preview_medicines": {{ preview_medicines_json|safe|default:"[]" }},
+    "default_medicine_options": {{ medicine_options_json|safe|default:"{}" }}
+}
+</script>
+
+<script>
+"use strict";
+
+(function() {
+    var dataEl = document.getElementById('editor-data');
+    if (!dataEl) {
+        console.error('❌ editor-data script پیدا نشد');
+        return;
+    }
+
+    var cfg;
+    try {
+        cfg = JSON.parse(dataEl.textContent);
+    } catch (e) {
+        console.error('❌ خطا در parse JSON config:', e);
+        return;
+    }
+
+    // ============================================================
+    // Global state
+    // ============================================================
+    window.TEMPLATE_ID = cfg.template_id;
+    window.CANVAS_W = cfg.canvas_w;
+    window.CANVAS_H = cfg.canvas_h;
+    window.SAVE_URL = cfg.save_url;
+    window.CSRF_TOKEN = "{{ csrf_token }}";
+
+    window.FONT_CHOICES = cfg.font_choices || [];
+    window.DATE_FORMATS = cfg.date_formats || [];
+    window.DATE_SEPARATORS = cfg.date_separators || [];
+    window.PREVIEW_DATA = cfg.preview_data || {};
+    window.PREVIEW_MEDICINES = cfg.preview_medicines || [];
+    window.DEFAULT_MEDICINE_OPTIONS = cfg.default_medicine_options || {};
+    window.EXISTING_FIELDS = cfg.fields || [];
+
+    var fields = [];
+    var selectedId = null;
+    var tempIdCounter = -1;
+    var zoomLevel = 1;
+    var history = [];
+    var redoStack = [];
+    var dragState = null;
+    var copiedStyle = null;
+    var copySourceId = null;
+
+    // ============================================================
+    // RTL helpers
+    // ============================================================
+    function containsPersian(text) {
+        if (!text) return false;
+        return /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/.test(String(text));
+    }
+
+    function isPersianFieldType(t) {
+        return [
+            'signs_symptoms', 'diagnosis', 'impression', 'doctor_note', 'advice',
+        ].indexOf(t) !== -1;
+    }
+
+    // ============================================================
+    // Init
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        loadExistingFields();
+        setupKeyboardShortcuts();
+        setupCanvasDeselect();
+        updateZoomLabel();
+    });
+
+    function loadExistingFields() {
+        var existing = window.EXISTING_FIELDS || [];
+        existing.forEach(function(fd) {
+            fields.push({
+                id: fd.id,
+                field_type: fd.field_type,
+                label: fd.label,
+                x: fd.x,
+                y: fd.y,
+                width: fd.width || 0,
+                height: fd.height || 0,
+                padding: fd.padding || 0,
+                line_height: fd.line_height || 1.4,
+                font_family: fd.font_family || 'Vazirmatn',
+                font_size: fd.font_size || 14,
+                font_weight: fd.font_weight || 'normal',
+                color: fd.color || '#0f172a',
+                text_align: fd.text_align || 'right',
+                has_shadow: fd.has_shadow || false,
+                shadow_color: fd.shadow_color || '#000000',
+                has_stroke: fd.has_stroke || false,
+                stroke_color: fd.stroke_color || '#ffffff',
+                stroke_width: fd.stroke_width || 1,
+                date_format: fd.date_format || 'YYYY/MM/DD',
+                date_separator: fd.date_separator || '/',
+                medicine_options: Object.assign(
+                    { show_quantity: true },
+                    window.DEFAULT_MEDICINE_OPTIONS,
+                    fd.medicine_options || {}
+                ),
+                order: fd.order || 0,
+            });
+        });
+        renderAll();
+    }
+
+    function renderAll() {
+        var canvas = document.getElementById('canvas');
+        canvas.querySelectorAll('.ed-element').forEach(function(el) { el.remove(); });
+
+        fields.sort(function(a, b) { return (a.order || 0) - (b.order || 0); });
+        fields.forEach(function(fd) {
+            var el = createElement(fd);
+            canvas.appendChild(el);
+        });
+
+        if (selectedId !== null) {
+            var el = canvas.querySelector('.ed-element[data-id="' + selectedId + '"]');
+            if (el) {
+                el.classList.add('selected');
+                updateOverlay();
+            } else {
+                selectField(null);
+            }
+        } else {
+            hideOverlay();
+        }
+    }
+
+    function createElement(fd) {
+        var el = document.createElement('div');
+        el.className = 'ed-element';
+        el.dataset.id = fd.id;
+        el.dataset.fieldType = fd.field_type;
+
+        applyStyles(el, fd);
+        attachElementEvents(el);
+        return el;
+    }
+
+    function getPreviewText(fieldType, customLabel) {
+        if (window.PREVIEW_DATA && window.PREVIEW_DATA[fieldType] !== undefined && window.PREVIEW_DATA[fieldType] !== '') {
+            return window.PREVIEW_DATA[fieldType];
+        }
+        return customLabel || getDefaultLabel(fieldType);
+    }
+
+    // ============================================================
+    // ⭐ Medicine preview — with quantity badge
+    // ============================================================
+    function buildMedicineTableHTML(opts, textAlign) {
+        var isRtl = (textAlign === 'right' || !textAlign);
+        var direction = isRtl ? 'rtl' : 'ltr';
+        var justify = isRtl ? 'flex-start' : (textAlign === 'center' ? 'center' : 'flex-start');
+        var align = isRtl ? 'right' : (textAlign === 'center' ? 'center' : 'left');
+
+        var meds = window.PREVIEW_MEDICINES || [];
+
+        var rows = meds.map(function(med) {
+            // ⭐ Quantity badge
+            var qtyText = '';
+            if (opts.show_quantity !== false && med.quantity) {
+                qtyText = '<span class="med-qty-badge">n=' + escapeHtml(String(med.quantity)) + '</span>';
+            }
+
+            // Line 1: number + name (+ strength) + quantity badge
+            var firstLineParts = [];
+
+            if (opts.show_number) {
+                firstLineParts.push('<span class="med-number">' + med.number + '.</span>');
+            }
+
+            var primary = '';
+            if (opts.show_generic && med.generic) {
+                primary = med.generic;
+            } else if (med.name) {
+                primary = med.name;
+            } else if (med.brand) {
+                primary = med.brand;
+            }
+
+            if (primary) {
+                var strengthPart = (opts.show_strength && med.strength) ? ' ' + med.strength : '';
+                firstLineParts.push(
+                    '<span class="med-name">' + escapeHtml(primary) + escapeHtml(strengthPart) + '</span>'
+                );
+            }
+
+            // ⭐ push badge last — it sticks to the right via margin-right:auto
+            if (qtyText) {
+                firstLineParts.push(qtyText);
+            }
+
+            // Line 2: meta (generic + manufacturer + brand)
+            var metaParts = [];
+
+            if (opts.show_generic && med.generic && med.generic !== primary) {
+                metaParts.push('<span class="med-generic">' + escapeHtml(med.generic) + '</span>');
+            }
+            if (opts.show_manufacturer && med.manufacturer) {
+                metaParts.push('<span class="med-manufacturer">' + escapeHtml(med.manufacturer) + '</span>');
+            }
+            if (opts.show_brand && med.brand && med.brand !== primary) {
+                metaParts.push('<span class="med-brand">(' + escapeHtml(med.brand) + ')</span>');
+            }
+
+            var html = '<div class="ed-medicine-row" style="direction:' + direction + '; text-align:' + align + ';">';
+
+            if (firstLineParts.length) {
+                html += '<div class="med-first-line" style="direction:' + direction + '; justify-content:' + justify + ';">'
+                      + firstLineParts.join(' ')
+                      + '</div>';
+            }
+
+            if (metaParts.length) {
+                html += '<div class="med-meta-line" style="direction:' + direction + '; justify-content:' + justify + ';">'
+                      + metaParts.join(' ')
+                      + '</div>';
+            }
+
+            // Line 3: pills
+            var specParts = [];
+            if (opts.show_dosage && med.dosage) specParts.push(med.dosage);
+            if (opts.show_frequency && med.frequency) specParts.push(med.frequency);
+            if (opts.show_timing && med.timing) specParts.push(med.timing);
+            if (opts.show_route && med.route) specParts.push(med.route);
+            if (opts.show_duration && med.duration) specParts.push(med.duration);
+
+            if (specParts.length) {
+                html += '<div class="med-specs" style="direction:' + direction + '; text-align:' + align + ';">'
+                      + specParts.map(escapeHtml).join(' <span style="opacity:0.4;">|</span> ')
+                      + '</div>';
+            }
+
+            html += '</div>';
+            return html;
+        }).join('');
+
+        return '<div class="ed-medicine-table" style="direction:' + direction + ';">' + rows + '</div>';
+    }
+
+    function applyStyles(el, fd) {
+        el.style.left = fd.x + 'px';
+        el.style.top = fd.y + 'px';
+        el.dataset.x = fd.x;
+        el.dataset.y = fd.y;
+        el.dataset.width = fd.width || 0;
+        el.dataset.height = fd.height || 0;
+
+        el.style.fontFamily = "'" + fd.font_family + "', 'Vazirmatn', Tahoma, Arial, sans-serif";
+        el.style.fontSize = fd.font_size + 'px';
+        el.style.fontWeight = fd.font_weight;
+        el.style.color = fd.color;
+        el.style.textAlign = fd.text_align;
+        el.style.lineHeight = fd.line_height || 1.4;
+        el.style.padding = (fd.padding || 0) + 'px';
+
+        var previewText = getPreviewText(fd.field_type, fd.label);
+        var isRtlField = containsPersian(previewText) || isPersianFieldType(fd.field_type);
+        el.style.direction = isRtlField ? 'rtl' : 'ltr';
+        el.style.unicodeBidi = isRtlField ? 'embed' : 'normal';
+
+        if (isPersianFieldType(fd.field_type)) {
+            el.style.textAlign = 'right';
+            el.style.direction = 'rtl';
+        }
+
+        el.classList.remove('has-fixed-width');
+        el.classList.remove('justify-text');
+
+        if (fd.width && fd.width > 0) {
+            el.style.width = fd.width + 'px';
+            el.style.maxWidth = 'none';
+            el.style.minWidth = '20px';
+            el.style.whiteSpace = 'normal';
+            el.style.wordBreak = 'break-word';
+            el.style.overflowWrap = 'break-word';
+            el.style.overflow = 'visible';
+            el.classList.add('has-fixed-width');
+
+            if (isPersianFieldType(fd.field_type)) {
+                el.classList.add('justify-text');
+            }
+        } else {
+            el.style.width = '';
+            el.style.maxWidth = '';
+            el.style.minWidth = '';
+            el.style.whiteSpace = 'nowrap';
+            el.style.overflow = '';
+        }
+
+        if (fd.height && fd.height > 0) {
+            el.style.height = fd.height + 'px';
+            el.style.overflow = 'visible';
+        } else {
+            el.style.height = '';
+        }
+
+        if (fd.has_shadow) {
+            el.style.textShadow = '1px 1px 2px ' + fd.shadow_color;
+        } else {
+            el.style.textShadow = '';
+        }
+
+        if (fd.has_stroke) {
+            el.style.webkitTextStroke = fd.stroke_width + 'px ' + fd.stroke_color;
+            el.style.paintOrder = 'stroke fill';
+        } else {
+            el.style.webkitTextStroke = '';
+        }
+
+        el.innerHTML = '';
+
+        if (fd.field_type === 'medications_list') {
+            el.innerHTML = buildMedicineTableHTML(
+                fd.medicine_options || window.DEFAULT_MEDICINE_OPTIONS,
+                fd.text_align || 'right'
+            );
+        } else {
+            var textToDraw = getPreviewText(fd.field_type, fd.label);
+            el.appendChild(document.createTextNode(textToDraw));
+        }
+    }
+
+    function isWrapField(t) {
+        return [
+            'signs_symptoms', 'diagnosis', 'impression', 'doctor_note', 'advice',
+            'medications_list',
+        ].indexOf(t) !== -1;
+    }
+
+    function isDateField(t) {
+        return t === 'prescription_date';
+    }
+
+    function isMedicineField(t) {
+        return t === 'medications_list';
+    }
+
+    function getDefaultLabel(t) {
+        var map = {
+            patient_name: 'Name', patient_father: 'Father',
+            patient_age: 'Age', patient_gender: 'Sex',
+            patient_phone: 'Phone', patient_address: 'Address',
+            patient_file: 'File',
+            vital_bp: 'BP', vital_pr: 'PR', vital_rr: 'RR',
+            vital_temp: 'Temp', vital_spo2: 'SpO2',
+            vital_weight: 'Weight', vital_height: 'Height', vital_bmi: 'BMI',
+            signs_symptoms: 'S/S', diagnosis: 'Dx',
+            impression: 'Imp', doctor_note: 'Note',
+            advice: 'Advice',
+            medications_list: 'Meds',
+            prescription_number: 'Rx#',
+            prescription_date: 'Date',
+        };
+        return map[t] || t;
+    }
+
+    window.addField = function(fieldType, label) {
+        pushHistory();
+
+        var fd = {
+            id: tempIdCounter--,
+            field_type: fieldType,
+            label: label || getDefaultLabel(fieldType),
+            x: 60,
+            y: 60,
+            width: isWrapField(fieldType) ? 500 : 0,
+            height: 0,
+            padding: 0,
+            line_height: 1.4,
+            font_family: 'Vazirmatn',
+            font_size: 32,
+            font_weight: 'normal',
+            color: '#0f172a',
+            text_align: 'right',
+            has_shadow: false,
+            shadow_color: '#000000',
+            has_stroke: false,
+            stroke_color: '#ffffff',
+            stroke_width: 1,
+            date_format: 'YYYY/MM/DD',
+            date_separator: '/',
+            medicine_options: Object.assign(
+                { show_quantity: true },
+                window.DEFAULT_MEDICINE_OPTIONS
+            ),
+            order: fields.length,
+        };
+
+        fields.push(fd);
+        renderAll();
+        selectField(fd.id);
+    };
+
+    function attachElementEvents(el) {
+        el.addEventListener('mousedown', startDrag);
+        el.addEventListener('click', function(e) {
+            e.stopPropagation();
+            selectField(parseInt(el.dataset.id));
+        });
+    }
+
+    function startDrag(e) {
+        if (e.button !== 0) return;
+
+        var el = e.currentTarget;
+        var id = parseInt(el.dataset.id);
+
+        if (selectedId !== id) selectField(id);
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        dragState = {
+            type: 'move',
+            el: el,
+            id: id,
+            startMouseX: e.clientX,
+            startMouseY: e.clientY,
+            startX: parseFloat(el.dataset.x) || 0,
+            startY: parseFloat(el.dataset.y) || 0,
+            moved: false,
+        };
+
+        el.classList.add('dragging');
+        document.addEventListener('mousemove', onDragMove);
+        document.addEventListener('mouseup', onDragEnd);
+    }
+
+    function onDragMove(e) {
+        if (!dragState || dragState.type !== 'move') return;
+
+        var dx = (e.clientX - dragState.startMouseX) / zoomLevel;
+        var dy = (e.clientY - dragState.startMouseY) / zoomLevel;
+
+        if (!dragState.moved && (Math.abs(dx) > 2 || Math.abs(dy) > 2)) {
+            dragState.moved = true;
+            pushHistory();
+        }
+
+        var newX = Math.round(dragState.startX + dx);
+        var newY = Math.round(dragState.startY + dy);
+
+        newX = Math.max(0, Math.min(window.CANVAS_W - 10, newX));
+        newY = Math.max(0, Math.min(window.CANVAS_H - 10, newY));
+
+        dragState.el.style.left = newX + 'px';
+        dragState.el.style.top = newY + 'px';
+        dragState.el.dataset.x = newX;
+        dragState.el.dataset.y = newY;
+
+        var fd = fields.find(function(f) { return f.id === dragState.id; });
+        if (fd) { fd.x = newX; fd.y = newY; }
+
+        updateOverlay();
+    }
+
+    function onDragEnd() {
+        if (!dragState) return;
+        dragState.el.classList.remove('dragging');
+        dragState = null;
+        document.removeEventListener('mousemove', onDragMove);
+        document.removeEventListener('mouseup', onDragEnd);
+        updateOverlay();
+        if (selectedId !== null) updateInspector();
+    }
+
+    function updateOverlay() {
+        var overlay = document.getElementById('selectionOverlay');
+        var box = document.getElementById('selectionBox');
+
+        if (selectedId === null) {
+            hideOverlay();
+            return;
+        }
+
+        var el = document.querySelector('.ed-element[data-id="' + selectedId + '"]');
+        if (!el) {
+            hideOverlay();
+            return;
+        }
+
+        var canvas = document.getElementById('canvas');
+        var canvasRect = canvas.getBoundingClientRect();
+        var elRect = el.getBoundingClientRect();
+
+        var scale = canvasRect.width / window.CANVAS_W;
+
+        var x = (elRect.left - canvasRect.left) / scale;
+        var y = (elRect.top - canvasRect.top) / scale;
+        var w = elRect.width / scale;
+        var h = elRect.height / scale;
+
+        overlay.style.left = x + 'px';
+        overlay.style.top = y + 'px';
+        overlay.style.width = w + 'px';
+        overlay.style.height = h + 'px';
+        overlay.classList.add('active');
+
+        box.style.width = w + 'px';
+        box.style.height = h + 'px';
+    }
+
+    function hideOverlay() {
+        document.getElementById('selectionOverlay').classList.remove('active');
+    }
+
+    function startResize(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        var handle = e.target;
+        var dir = handle.dataset.dir;
+        var el = document.querySelector('.ed-element[data-id="' + selectedId + '"]');
+        if (!el) return;
+
+        var fd = fields.find(function(f) { return f.id === selectedId; });
+        if (!fd) return;
+
+        pushHistory();
+
+        dragState = {
+            type: 'resize',
+            dir: dir,
+            el: el,
+            id: selectedId,
+            startMouseX: e.clientX,
+            startMouseY: e.clientY,
+            startX: fd.x,
+            startY: fd.y,
+            startW: el.offsetWidth,
+            startH: el.offsetHeight,
+        };
+
+        document.addEventListener('mousemove', onResizeMove);
+        document.addEventListener('mouseup', onResizeEnd);
+    }
+
+    function onResizeMove(e) {
+        if (!dragState || dragState.type !== 'resize') return;
+
+        var dx = (e.clientX - dragState.startMouseX) / zoomLevel;
+        var dy = (e.clientY - dragState.startMouseY) / zoomLevel;
+        var dir = dragState.dir;
+
+        var el = dragState.el;
+        var fd = fields.find(function(f) { return f.id === dragState.id; });
+        if (!fd) return;
+
+        var newX = dragState.startX;
+        var newY = dragState.startY;
+        var newW = dragState.startW;
+        var newH = dragState.startH;
+
+        if (dir.indexOf('e') !== -1) newW = Math.max(20, dragState.startW + dx);
+        if (dir.indexOf('w') !== -1) {
+            newW = Math.max(20, dragState.startW - dx);
+            newX = Math.max(0, dragState.startX + dx);
+        }
+        if (dir.indexOf('s') !== -1) newH = Math.max(20, dragState.startH + dy);
+        if (dir.indexOf('n') !== -1) {
+            newH = Math.max(20, dragState.startH - dy);
+            newY = Math.max(0, dragState.startY + dy);
+        }
+
+        newX = Math.round(newX);
+        newY = Math.round(newY);
+        newW = Math.round(newW);
+        newH = Math.round(newH);
+
+        el.style.left = newX + 'px';
+        el.style.top = newY + 'px';
+        el.style.width = newW + 'px';
+        el.style.maxWidth = 'none';
+        el.style.minWidth = '20px';
+        el.style.height = newH + 'px';
+        el.style.overflow = 'visible';
+        el.style.whiteSpace = 'normal';
+        el.style.wordBreak = 'break-word';
+        el.style.overflowWrap = 'break-word';
+        el.classList.add('has-fixed-width');
+
+        fd.x = newX;
+        fd.y = newY;
+        fd.width = newW;
+        fd.height = newH;
+
+        updateOverlay();
+    }
+
+    function onResizeEnd() {
+        dragState = null;
+        document.removeEventListener('mousemove', onResizeMove);
+        document.removeEventListener('mouseup', onResizeEnd);
+        updateOverlay();
+        if (selectedId !== null) updateInspector();
+    }
+
+    function setupOverlayHandles() {
+        var overlay = document.getElementById('selectionOverlay');
+        ['nw','n','ne','w','e','sw','s','se'].forEach(function(dir) {
+            var h = document.createElement('div');
+            h.className = 'ed-handle ' + dir;
+            h.dataset.dir = dir;
+            h.addEventListener('mousedown', startResize);
+            overlay.appendChild(h);
+        });
+    }
+
+    function selectField(id) {
+        selectedId = id;
+
+        document.querySelectorAll('.ed-element').forEach(function(el) {
+            el.classList.toggle('selected', parseInt(el.dataset.id) === id);
+        });
+
+        if (id === null) {
+            hideOverlay();
+        } else {
+            updateOverlay();
+        }
+
+        updateInspector();
+    }
+
+    function setupCanvasDeselect() {
+        var canvas = document.getElementById('canvas');
+        canvas.addEventListener('click', function(e) {
+            if (e.target === canvas || e.target.id === 'canvasBg') {
+                selectField(null);
+            }
+        });
+
+        setupOverlayHandles();
+        window.addEventListener('resize', updateOverlay);
+        document.getElementById('canvasArea').addEventListener('scroll', updateOverlay);
+    }
+
+    function updateInspector() {
+        var box = document.getElementById('inspectorContent');
+
+        if (selectedId === null) {
+            box.innerHTML = '<div class="ed-empty-inspector">' +
+                '<i class="bi bi-hand-index-thumb"></i>' +
+                'یک فیلد را انتخاب کنید<br>' +
+                'تا تنظیمات آن نمایش داده شود' +
+                '</div>';
+            return;
+        }
+
+        var fd = fields.find(function(f) { return f.id === selectedId; });
+        if (!fd) return;
+
+        var dateField = isDateField(fd.field_type);
+        var medField = isMedicineField(fd.field_type);
+
+        var persianFonts = ['Vazirmatn', 'Parastoo', 'Tahoma'];
+        var fontOptions = (window.FONT_CHOICES || []).map(function(pair) {
+            var v = pair[0], l = pair[1];
+            var isRtl = persianFonts.indexOf(v) !== -1;
+            var dir = isRtl ? 'direction:rtl;' : '';
+            return '<option value="' + v + '" style="font-family:\'' + v + '\',sans-serif;' + dir + 'font-size:13px;" ' +
+                   (fd.font_family === v ? 'selected' : '') + '>' + l + '</option>';
+        }).join('');
+
+        var DATE_FORMAT_LABELS = {
+            'YYYY/MM/DD': 'سال/ماه/روز (1403/07/15)',
+            'YYYY-MM-DD': 'سال-ماه-روز (1403-07-15)',
+            'DD/MM/YYYY': 'روز/ماه/سال (15/07/1403)',
+            'DD-MM-YYYY': 'روز-ماه-سال (15-07-1403)',
+            'MM/DD/YYYY': 'ماه/روز/سال (07/15/1403)',
+            'MM-DD-YYYY': 'ماه-روز-سال (07-15-1403)',
+        };
+
+        var dateFormatOptions = (window.DATE_FORMATS || []).map(function(pair) {
+            var v = pair[0], l = pair[1];
+            var label = DATE_FORMAT_LABELS[v] || l;
+            return '<option value="' + v + '" ' + (fd.date_format === v ? 'selected' : '') + '>' + label + '</option>';
+        }).join('');
+
+        var dateSepOptions = (window.DATE_SEPARATORS || []).map(function(pair) {
+            var v = pair[0], l = pair[1];
+            return '<option value="' + v + '" ' + (fd.date_separator === v ? 'selected' : '') + '>' + l + '</option>';
+        }).join('');
+
+        var mo = fd.medicine_options || window.DEFAULT_MEDICINE_OPTIONS;
+        var medOptionsHTML = medField ? (
+            '<div class="ed-inspector-section">' +
+                '<div class="ed-inspector-title"><i class="bi bi-eye-fill"></i> نمایش دوا</div>' +
+                '<div class="ed-checkbox-list">' +
+                    '<label class="ed-checkbox-item"><input type="checkbox" ' + (mo.show_number?'checked':'') + ' onchange="updateMedicineOption(\'show_number\', this.checked)"> شماره ردیف</label>' +
+                    // ⭐ Highlighted quantity toggle
+                    '<label class="ed-checkbox-item qty-highlight"><input type="checkbox" ' + (mo.show_quantity !== false ?'checked':'') + ' onchange="updateMedicineOption(\'show_quantity\', this.checked)"> نمایش تعداد (n=X)</label>' +
+                    '<label class="ed-checkbox-item"><input type="checkbox" ' + (mo.show_generic?'checked':'') + ' onchange="updateMedicineOption(\'show_generic\', this.checked)"> نام جنریک</label>' +
+                    '<label class="ed-checkbox-item"><input type="checkbox" ' + (mo.show_brand?'checked':'') + ' onchange="updateMedicineOption(\'show_brand\', this.checked)"> نام تجارتی</label>' +
+                    '<label class="ed-checkbox-item"><input type="checkbox" ' + (mo.show_manufacturer?'checked':'') + ' onchange="updateMedicineOption(\'show_manufacturer\', this.checked)"> شرکت سازنده</label>' +
+                    '<label class="ed-checkbox-item"><input type="checkbox" ' + (mo.show_strength?'checked':'') + ' onchange="updateMedicineOption(\'show_strength\', this.checked)"> قدرت (mg)</label>' +
+                    '<label class="ed-checkbox-item"><input type="checkbox" ' + (mo.show_dosage?'checked':'') + ' onchange="updateMedicineOption(\'show_dosage\', this.checked)"> دوز</label>' +
+                    '<label class="ed-checkbox-item"><input type="checkbox" ' + (mo.show_frequency?'checked':'') + ' onchange="updateMedicineOption(\'show_frequency\', this.checked)"> دفعات</label>' +
+                    '<label class="ed-checkbox-item"><input type="checkbox" ' + (mo.show_timing?'checked':'') + ' onchange="updateMedicineOption(\'show_timing\', this.checked)"> زمان مصرف</label>' +
+                    '<label class="ed-checkbox-item"><input type="checkbox" ' + (mo.show_route?'checked':'') + ' onchange="updateMedicineOption(\'show_route\', this.checked)"> طریقه مصرف</label>' +
+                    '<label class="ed-checkbox-item"><input type="checkbox" ' + (mo.show_duration?'checked':'') + ' onchange="updateMedicineOption(\'show_duration\', this.checked)"> مدت مصرف</label>' +
+                    '<label class="ed-checkbox-item"><input type="checkbox" ' + (mo.show_border?'checked':'') + ' onchange="updateMedicineOption(\'show_border\', this.checked)"> خط دور هر دوا</label>' +
+                '</div>' +
+            '</div>'
+        ) : '';
+
+        box.innerHTML =
+            '<div class="ed-style-btns">' +
+                '<button class="ed-style-btn copy" onclick="copyStyle()" ' + (copiedStyle && copySourceId === fd.id ? 'disabled' : '') + '><i class="bi bi-clipboard-check"></i> Copy Style</button>' +
+                '<button class="ed-style-btn paste" onclick="pasteStyle()" ' + (!copiedStyle ? 'disabled' : '') + '><i class="bi bi-clipboard-plus"></i> Paste Style</button>' +
+            '</div>' +
+            (copiedStyle ? '<div style="background:#fef3c7;padding:6px 10px;border-radius:6px;font-size:11px;color:#92400e;margin-bottom:10px;text-align:center;"><i class="bi bi-clipboard-check"></i> استایل ذخیره شده</div>' : '') +
+
+            '<div class="ed-inspector-section">' +
+                '<div class="ed-inspector-title"><i class="bi bi-type"></i> محتوا</div>' +
+                '<div class="ed-input-group">' +
+                    '<label class="ed-label">برچسب</label>' +
+                    '<input type="text" class="ed-input" value="' + escapeHtml(fd.label) + '" oninput="updateField(\'label\', this.value)">' +
+                '</div>' +
+            '</div>' +
+
+            '<div class="ed-inspector-section">' +
+                '<div class="ed-inspector-title"><i class="bi bi-arrows-move"></i> موقعیت و ابعاد</div>' +
+                '<div class="ed-input-row">' +
+                    '<div><label class="ed-label">X</label><input type="number" class="ed-input" value="' + fd.x + '" min="0" oninput="updateField(\'x\', parseInt(this.value)||0)"></div>' +
+                    '<div><label class="ed-label">Y</label><input type="number" class="ed-input" value="' + fd.y + '" min="0" oninput="updateField(\'y\', parseInt(this.value)||0)"></div>' +
+                '</div>' +
+                '<div class="ed-input-row">' +
+                    '<div><label class="ed-label">عرض (px)</label><input type="number" class="ed-input" value="' + (fd.width||0) + '" min="0" placeholder="0 = خودکار" oninput="updateField(\'width\', parseInt(this.value)||0)"></div>' +
+                    '<div><label class="ed-label">ارتفاع (px)</label><input type="number" class="ed-input" value="' + (fd.height||0) + '" min="0" placeholder="0 = خودکار" oninput="updateField(\'height\', parseInt(this.value)||0)"></div>' +
+                '</div>' +
+                '<div class="ed-input-row">' +
+                    '<div><label class="ed-label">Padding</label><input type="number" class="ed-input" value="' + (fd.padding||0) + '" min="0" oninput="updateField(\'padding\', parseInt(this.value)||0)"></div>' +
+                    '<div><label class="ed-label">Line Height</label><input type="number" class="ed-input" value="' + (fd.line_height||1.4) + '" min="0.8" max="3" step="0.1" oninput="updateField(\'line_height\', parseFloat(this.value)||1.4)"></div>' +
+                '</div>' +
+            '</div>' +
+
+            '<div class="ed-inspector-section">' +
+                '<div class="ed-inspector-title"><i class="bi bi-fonts"></i> فونت</div>' +
+                '<div class="ed-input-group">' +
+                    '<label class="ed-label">نام فونت</label>' +
+                    '<select class="ed-input" onchange="updateField(\'font_family\', this.value)">' + fontOptions + '</select>' +
+                    '<div class="ed-font-preview" style="font-family:\'' + fd.font_family + '\', sans-serif;">نمونه متن — آب پ چ گ ژ</div>' +
+                '</div>' +
+                '<div class="ed-input-row">' +
+                    '<div><label class="ed-label">اندازه</label><input type="number" class="ed-input" value="' + fd.font_size + '" min="8" max="300" oninput="updateField(\'font_size\', parseInt(this.value)||14)"></div>' +
+                    '<div><label class="ed-label">ضخامت</label><select class="ed-input" onchange="updateField(\'font_weight\', this.value)"><option value="normal" ' + (fd.font_weight==='normal'?'selected':'') + '>معمولی</option><option value="bold" ' + (fd.font_weight==='bold'?'selected':'') + '>ضخیم</option></select></div>' +
+                '</div>' +
+                '<div class="ed-input-row">' +
+                    '<div><label class="ed-label">رنگ</label><input type="color" class="ed-input" value="' + fd.color + '" oninput="updateField(\'color\', this.value)"></div>' +
+                    '<div><label class="ed-label">چینش</label><select class="ed-input" onchange="updateField(\'text_align\', this.value)"><option value="right" ' + (fd.text_align==='right'?'selected':'') + '>راست</option><option value="center" ' + (fd.text_align==='center'?'selected':'') + '>وسط</option><option value="left" ' + (fd.text_align==='left'?'selected':'') + '>چپ</option></select></div>' +
+                '</div>' +
+            '</div>' +
+
+            medOptionsHTML +
+
+            (dateField ?
+                '<div class="ed-inspector-section">' +
+                    '<div class="ed-inspector-title"><i class="bi bi-calendar3"></i> قالب تاریخ</div>' +
+                    '<div class="ed-input-group">' +
+                        '<label class="ed-label">فرمت نمایش</label>' +
+                        '<select class="ed-input" onchange="updateField(\'date_format\', this.value)">' + dateFormatOptions + '</select>' +
+                    '</div>' +
+                    '<div class="ed-input-group">' +
+                        '<label class="ed-label">جداکننده</label>' +
+                        '<select class="ed-input" onchange="updateField(\'date_separator\', this.value)">' + dateSepOptions + '</select>' +
+                    '</div>' +
+                '</div>'
+            : '') +
+
+            '<div class="ed-inspector-section">' +
+                '<div class="ed-inspector-title"><i class="bi bi-stars"></i> افکت‌ها</div>' +
+                '<label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:8px;cursor:pointer;">' +
+                    '<input type="checkbox" ' + (fd.has_shadow?'checked':'') + ' onchange="updateField(\'has_shadow\', this.checked)"> سایه متن' +
+                '</label>' +
+                (fd.has_shadow ?
+                    '<div class="ed-input-group"><label class="ed-label">رنگ سایه</label><input type="color" class="ed-input" value="' + fd.shadow_color + '" oninput="updateField(\'shadow_color\', this.value)"></div>'
+                : '') +
+                '<label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:8px;cursor:pointer;">' +
+                    '<input type="checkbox" ' + (fd.has_stroke?'checked':'') + ' onchange="updateField(\'has_stroke\', this.checked)"> خط دور متن' +
+                '</label>' +
+                (fd.has_stroke ?
+                    '<div class="ed-input-row">' +
+                        '<div><label class="ed-label">رنگ خط</label><input type="color" class="ed-input" value="' + fd.stroke_color + '" oninput="updateField(\'stroke_color\', this.value)"></div>' +
+                        '<div><label class="ed-label">ضخامت</label><input type="number" class="ed-input" min="1" max="10" value="' + fd.stroke_width + '" oninput="updateField(\'stroke_width\', parseInt(this.value)||1)"></div>' +
+                    '</div>'
+                : '') +
+            '</div>' +
+
+            '<button class="ed-btn-danger" onclick="deleteSelected()"><i class="bi bi-trash-fill"></i> حذف فیلد</button>';
+    }
+
+    window.updateField = function(key, value) {
+        if (selectedId === null) return;
+        var fd = fields.find(function(f) { return f.id === selectedId; });
+        if (!fd) return;
+
+        fd[key] = value;
+        var el = document.querySelector('.ed-element[data-id="' + selectedId + '"]');
+        if (el) {
+            applyStyles(el, fd);
+            updateOverlay();
+        }
+
+        if (key === 'font_family' || key === 'font_weight' || key === 'text_align') {
+            updateInspector();
+        }
+    };
+
+    window.updateMedicineOption = function(key, value) {
+        if (selectedId === null) return;
+        var fd = fields.find(function(f) { return f.id === selectedId; });
+        if (!fd) return;
+
+        if (!fd.medicine_options) fd.medicine_options = Object.assign({}, window.DEFAULT_MEDICINE_OPTIONS);
+        fd.medicine_options[key] = value;
+
+        var el = document.querySelector('.ed-element[data-id="' + selectedId + '"]');
+        if (el) {
+            applyStyles(el, fd);
+            updateOverlay();
+        }
+    };
+
+    var STYLE_KEYS = [
+        'font_family','font_size','font_weight','color','text_align',
+        'has_shadow','shadow_color','has_stroke','stroke_color','stroke_width',
+        'padding','line_height',
+    ];
+
+    window.copyStyle = function() {
+        if (selectedId === null) return;
+        var fd = fields.find(function(f) { return f.id === selectedId; });
+        if (!fd) return;
+
+        copiedStyle = {};
+        STYLE_KEYS.forEach(function(k) { copiedStyle[k] = fd[k]; });
+        copySourceId = fd.id;
+
+        document.querySelectorAll('.ed-element').forEach(function(el) { el.classList.remove('copy-source'); });
+        var srcEl = document.querySelector('.ed-element[data-id="' + fd.id + '"]');
+        if (srcEl) srcEl.classList.add('copy-source');
+
+        updateInspector();
+    };
+
+    window.pasteStyle = function() {
+        if (!copiedStyle || selectedId === null) return;
+        var fd = fields.find(function(f) { return f.id === selectedId; });
+        if (!fd) return;
+
+        pushHistory();
+
+        STYLE_KEYS.forEach(function(k) { fd[k] = copiedStyle[k]; });
+        var el = document.querySelector('.ed-element[data-id="' + fd.id + '"]');
+        if (el) {
+            applyStyles(el, fd);
+            updateOverlay();
+        }
+
+        updateInspector();
+    };
+
+    window.deleteSelected = function() {
+        if (selectedId === null) return;
+
+        pushHistory();
+
+        var idx = fields.findIndex(function(f) { return f.id === selectedId; });
+        if (idx !== -1) fields.splice(idx, 1);
+
+        if (copySourceId === selectedId) {
+            copySourceId = null;
+            document.querySelectorAll('.copy-source').forEach(function(el) { el.classList.remove('copy-source'); });
+        }
+
+        selectField(null);
+        renderAll();
+    };
+
+    window.saveAll = async function() {
+        var status = document.getElementById('saveStatus');
+        status.textContent = 'در حال ذخیره...';
+        status.className = 'ed-save-status saving';
+
+        try {
+            if (document.fonts && document.fonts.ready) {
+                await document.fonts.ready;
+            }
+
+            var payload = {
+                fields: fields.map(function(fd, i) {
+                    return {
+                        id: fd.id > 0 ? fd.id : null,
+                        field_type: fd.field_type,
+                        label: fd.label,
+                        x: fd.x,
+                        y: fd.y,
+                        width: fd.width || 0,
+                        height: fd.height || 0,
+                        padding: fd.padding || 0,
+                        line_height: fd.line_height || 1.4,
+                        font_family: fd.font_family,
+                        font_size: fd.font_size,
+                        font_weight: fd.font_weight,
+                        color: fd.color,
+                        text_align: fd.text_align,
+                        has_shadow: fd.has_shadow,
+                        shadow_color: fd.shadow_color,
+                        has_stroke: fd.has_stroke,
+                        stroke_color: fd.stroke_color,
+                        stroke_width: fd.stroke_width,
+                        date_format: fd.date_format || 'YYYY/MM/DD',
+                        date_separator: fd.date_separator || '/',
+                        medicine_options: fd.medicine_options || {},
+                        order: i,
+                    };
+                }),
+            };
+
+            var res = await fetch(window.SAVE_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': window.CSRF_TOKEN,
+                },
+                body: JSON.stringify(payload),
+            });
+
+            var data = await res.json();
+            if (data.success) {
+                status.textContent = '✓ ذخیره شد';
+                status.className = 'ed-save-status saved';
+                setTimeout(function() { location.reload(); }, 800);
+            } else {
+                throw new Error(data.error || 'خطای ناشناخته');
+            }
+        } catch (err) {
+            status.textContent = '✗ خطا: ' + err.message;
+            status.className = 'ed-save-status error';
+        }
+    };
+
+    function applyZoom() {
+        var wrapper = document.getElementById('canvasWrapper');
+        wrapper.style.transform = 'scale(' + zoomLevel + ')';
+        updateZoomLabel();
+        setTimeout(updateOverlay, 180);
+    }
+    window.zoomIn = function() { zoomLevel = Math.min(2, zoomLevel + 0.1); applyZoom(); };
+    window.zoomOut = function() { zoomLevel = Math.max(0.2, zoomLevel - 0.1); applyZoom(); };
+    window.zoomReset = function() { zoomLevel = 1; applyZoom(); };
+    function updateZoomLabel() {
+        document.getElementById('zoomLabel').textContent = Math.round(zoomLevel * 100) + '%';
+    }
+
+    document.addEventListener('wheel', function(e) {
+        if (e.ctrlKey) {
+            e.preventDefault();
+            if (e.deltaY < 0) window.zoomIn(); else window.zoomOut();
+        }
+    }, { passive: false });
+
+    function pushHistory() {
+        history.push(JSON.stringify(fields));
+        if (history.length > 50) history.shift();
+        redoStack = [];
+    }
+    window.undo = function() {
+        if (history.length === 0) return;
+        redoStack.push(JSON.stringify(fields));
+        fields = JSON.parse(history.pop());
+        selectField(null);
+        renderAll();
+    };
+    window.redo = function() {
+        if (redoStack.length === 0) return;
+        history.push(JSON.stringify(fields));
+        fields = JSON.parse(redoStack.pop());
+        selectField(null);
+        renderAll();
+    };
+
+    function setupKeyboardShortcuts() {
+        document.addEventListener('keydown', function(e) {
+            if (['INPUT','SELECT','TEXTAREA'].indexOf(e.target.tagName) !== -1) return;
+
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                if (selectedId !== null) {
+                    e.preventDefault();
+                    window.deleteSelected();
+                }
+            }
+
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+                e.preventDefault();
+                if (e.shiftKey) window.redo(); else window.undo();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+                e.preventDefault(); window.redo();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault(); window.saveAll();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C') {
+                e.preventDefault(); window.copyStyle();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'V') {
+                e.preventDefault(); window.pasteStyle();
+            }
+
+            if (selectedId !== null && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].indexOf(e.key) !== -1) {
+                e.preventDefault();
+                var fd = fields.find(function(f) { return f.id === selectedId; });
+                if (!fd) return;
+                var step = e.shiftKey ? 10 : 1;
+                if (e.key === 'ArrowUp')    fd.y = Math.max(0, fd.y - step);
+                if (e.key === 'ArrowDown')  fd.y = Math.min(window.CANVAS_H - 10, fd.y + step);
+                if (e.key === 'ArrowLeft')  fd.x = Math.max(0, fd.x - step);
+                if (e.key === 'ArrowRight') fd.x = Math.min(window.CANVAS_W - 10, fd.x + step);
+
+                var el = document.querySelector('.ed-element[data-id="' + selectedId + '"]');
+                if (el) {
+                    applyStyles(el, fd);
+                    updateOverlay();
+                }
+                updateInspector();
+            }
+        });
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    window.addEventListener('load', function() {
+        updateOverlay();
+        if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(function() {
+                updateOverlay();
+                if (selectedId !== null) updateInspector();
+            });
+        }
+    });
+
+})();
+</script>
+{% endblock %}

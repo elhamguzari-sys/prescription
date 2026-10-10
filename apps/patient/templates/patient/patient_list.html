@@ -1,0 +1,478 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ============================================================
+       Bigger, more readable text
+       ============================================================ */
+    .page-header h1      { font-size: 30px; }
+    .page-header p       { font-size: 15px; }
+
+    .filter-bar input,
+    .filter-bar select,
+    .filter-bar button,
+    .filter-bar a         { font-size: 15px; padding: 12px 16px; }
+
+    /* ============================================================
+       Table — readable + responsive
+       ============================================================ */
+    .table                 { font-size: 15px; }
+    .table thead th        { font-size: 14.5px; padding: 16px 14px; }
+    .table tbody td        { font-size: 14.5px; padding: 15px 14px; }
+
+    .patient-name          { font-size: 15.5px; font-weight: 700; }
+    .patient-sub           { font-size: 13px; }
+
+    /* ============================================================
+       Avatar — different color for male/female
+       ============================================================ */
+    .avatar                { width: 46px; height: 46px; font-size: 17px; }
+    .avatar.avatar-male    { background: linear-gradient(135deg, #2563eb, #1e40af); }
+    .avatar.avatar-female  { background: linear-gradient(135deg, #db2777, #9d174d); }
+
+    /* ============================================================
+       Gender badges — clear difference
+       ============================================================ */
+    .badge-gender          { font-size: 13px; padding: 6px 14px; border-radius: 20px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px; }
+    .badge-male            { background: #dbeafe; color: #1e3a8a; border: 1.5px solid #93c5fd; }
+    .badge-male i          { color: #2563eb; }
+    .badge-female          { background: #fce7f3; color: #831843; border: 1.5px solid #f9a8d4; }
+    .badge-female i        { color: #db2777; }
+
+    /* ============================================================
+       Action buttons — slightly bigger
+       ============================================================ */
+    .action-btn            { width: 38px; height: 38px; font-size: 15px; }
+
+    /* ============================================================
+       Responsive table → stacked cards on mobile
+       ============================================================ */
+    @media (max-width: 768px) {
+        .table thead { display: none; }
+
+        .table,
+        .table tbody,
+        .table tr,
+        .table td { display: block; width: 100%; }
+
+        .table tr {
+            background: white;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 14px;
+            margin-bottom: 14px;
+            padding: 14px 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+        }
+
+        .table td {
+            border: none;
+            padding: 8px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            text-align: left;
+            font-size: 14.5px;
+        }
+
+        .table td::before {
+            content: attr(data-label);
+            font-weight: 700;
+            color: #6b7280;
+            font-size: 13px;
+            min-width: 90px;
+        }
+
+        .table td[data-label="مریض"] {
+            padding-bottom: 12px;
+            margin-bottom: 8px;
+            border-bottom: 1.5px dashed #e5e7eb;
+            font-size: 16px;
+        }
+        .table td[data-label="مریض"]::before { display: none; }
+
+        .table td[data-label="عملیات"] {
+            justify-content: flex-end;
+            padding-top: 10px;
+            margin-top: 8px;
+            border-top: 1.5px dashed #e5e7eb;
+        }
+        .table td[data-label="عملیات"]::before { display: none; }
+
+        .table td[data-label="#"] { display: none; }
+    }
+
+    /* ============================================================
+       Modal labels — bigger
+       ============================================================ */
+    .modal-body .form-label { font-size: 14.5px; }
+    .modal-body .form-control,
+    .modal-body .form-select { font-size: 15px; padding: 12px 14px; }
+
+    .errorlist { font-size: 13.5px; }
+
+    /* ============================================================
+       Optional field badge
+       ============================================================ */
+    .optional-badge {
+        font-size: 11.5px;
+        color: #6b7280;
+        background: #f3f4f6;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        padding: 1px 7px;
+        margin-right: 6px;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1><i class="bi bi-people-fill"></i> {{ page_title }}</h1>
+        <p>مدیریت معلومات مریضان کلینیک</p>
+    </div>
+    <button class="btn-add" data-bs-toggle="modal" data-bs-target="#patientModal" onclick="resetForm()">
+        <i class="bi bi-plus-circle-fill"></i>
+        ثبت مریض جدید
+    </button>
+</div>
+
+<div class="card-box">
+
+    <!-- Filter -->
+    <form method="get" class="filter-bar">
+        <input type="text" name="search" value="{{ search_query }}" placeholder="🔍 جستجو: نام، تخلص، نام پدر، شماره تماس...">
+        <select name="gender">
+            <option value="">همه جنسیت‌ها</option>
+            <option value="M" {% if gender_filter == 'M' %}selected{% endif %}>مرد</option>
+            <option value="F" {% if gender_filter == 'F' %}selected{% endif %}>زن</option>
+        </select>
+        <button type="submit" class="btn-search">
+            <i class="bi bi-search"></i> جستجو
+        </button>
+        {% if search_query or gender_filter %}
+            <a href="{% url 'patient_list' %}" class="btn-reset">
+                <i class="bi bi-x-circle"></i> پاک کردن
+            </a>
+        {% endif %}
+    </form>
+
+    <!-- Table -->
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>مریض</th>
+                    <th>نام پدر</th>
+                    <th>جنسیت</th>
+                    <th>سن</th>
+                    <th>شماره تماس</th>
+                    <th>آدرس</th>
+                    <th>عملیات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for patient in patients %}
+                <tr>
+                    <td data-label="#">{{ forloop.counter0|add:patients.start_index }}</td>
+
+                    <td data-label="مریض">
+                        <div class="d-flex align-items-center gap-3">
+                            {% if patient.gender == 'M' %}
+                                <div class="avatar avatar-male">{{ patient.first_name|first }}</div>
+                            {% else %}
+                                <div class="avatar avatar-female">{{ patient.first_name|first }}</div>
+                            {% endif %}
+                            <div>
+                                <div class="patient-name">{{ patient.first_name }} {{ patient.last_name }}</div>
+                                <div class="patient-sub text-muted">ولد {{ patient.father_name }}</div>
+                            </div>
+                        </div>
+                    </td>
+
+                    <td data-label="نام پدر">{{ patient.father_name }}</td>
+
+                    <td data-label="جنسیت">
+                        {% if patient.gender == 'M' %}
+                            <span class="badge-gender badge-male">
+                                <i class="bi bi-gender-male"></i> مرد
+                            </span>
+                        {% else %}
+                            <span class="badge-gender badge-female">
+                                <i class="bi bi-gender-female"></i> زن
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <td data-label="سن"><strong>{{ patient.age }}</strong> سال</td>
+
+                    <td data-label="شماره تماس">
+                        {% if patient.phone %}
+                            <i class="bi bi-telephone-fill text-danger"></i> {{ patient.phone }}
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+
+                    <td data-label="آدرس">
+                        {% if patient.address %}
+                            <small class="text-muted">{{ patient.address|truncatechars:35 }}</small>
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+
+                    <td data-label="عملیات">
+                        <button class="action-btn btn-edit"
+                                onclick="editPatient(
+                                    {{ patient.id }},
+                                    '{{ patient.first_name|escapejs }}',
+                                    '{{ patient.last_name|escapejs }}',
+                                    '{{ patient.father_name|escapejs }}',
+                                    '{{ patient.gender }}',
+                                    {{ patient.age }},
+                                    '{{ patient.phone|default_if_none:''|escapejs }}',
+                                    '{{ patient.address|default_if_none:''|escapejs }}'
+                                )"
+                                title="ویرایش">
+                            <i class="bi bi-pencil-fill"></i>
+                        </button>
+
+                        <button class="action-btn btn-delete"
+                                onclick="confirmDelete({{ patient.id }}, '{{ patient.first_name|escapejs }} {{ patient.last_name|escapejs }}')"
+                                title="حذف">
+                            <i class="bi bi-trash-fill"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8">
+                        <div class="empty-state">
+                            <i class="bi bi-inbox"></i>
+                            <p>هیچ مریضی یافت نشد</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if patients.has_other_pages %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if patients.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ patients.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if gender_filter %}&gender={{ gender_filter }}{% endif %}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            {% endif %}
+
+            {% for num in patients.paginator.page_range %}
+                {% if patients.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > patients.number|add:-3 and num < patients.number|add:3 %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if gender_filter %}&gender={{ gender_filter }}{% endif %}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if patients.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ patients.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if gender_filter %}&gender={{ gender_filter }}{% endif %}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+</div>
+
+
+<!-- ============ MODAL: ثبت / ویرایش ============ -->
+<div class="modal fade" id="patientModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" id="patientForm" action="{% url 'patient_list' %}">
+                {% csrf_token %}
+
+                <input type="hidden" name="action" id="formAction" value="create">
+                <input type="hidden" name="patient_id" id="formPatientId" value="">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">
+                        <i class="bi bi-person-plus-fill"></i> ثبت مریض جدید
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">نام *</label>
+                            {{ form.first_name }}
+                            {{ form.first_name.errors }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">تخلص *</label>
+                            {{ form.last_name }}
+                            {{ form.last_name.errors }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">نام پدر *</label>
+                            {{ form.father_name }}
+                            {{ form.father_name.errors }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">جنسیت *</label>
+                            {{ form.gender }}
+                            {{ form.gender.errors }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">سن *</label>
+                            {{ form.age }}
+                            {{ form.age.errors }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                شماره تماس
+                                <span class="optional-badge">اختیاری</span>
+                            </label>
+                            {{ form.phone }}
+                            {{ form.phone.errors }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">
+                                آدرس
+                                <span class="optional-badge">اختیاری</span>
+                            </label>
+                            {{ form.address }}
+                            {{ form.address.errors }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary-custom" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg"></i> لغو
+                    </button>
+                    <button type="submit" class="btn btn-primary-custom text-white" id="submitBtn">
+                        <i class="bi bi-check-lg"></i> ذخیره
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ============ MODAL: تایید حذف ============ -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 460px;">
+        <div class="modal-content">
+            <form method="post" id="deleteForm" action="{% url 'patient_list' %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="patient_id" id="deletePatientId" value="">
+
+                <div class="modal-body text-center p-4" style="padding: 40px 30px 20px !important;">
+                    <div style="
+                        width: 90px; height: 90px;
+                        margin: 0 auto 20px;
+                        border-radius: 50%;
+                        background: #fee2e2;
+                        display: flex; align-items: center; justify-content: center;
+                        font-size: 44px;
+                        color: var(--red);
+                    ">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                    </div>
+
+                    <h4 class="fw-bold mb-3" style="font-size: 22px;">تایید حذف</h4>
+
+                    <p class="text-muted mb-0" style="font-size: 15.5px; line-height: 1.9;">
+                        آیا مطمئن هستید که می‌خواهید مریض
+                        <br>
+                        <strong id="deletePatientName" class="text-dark" style="font-size: 17px;"></strong>
+                        <br>
+                        را حذف کنید؟
+                    </p>
+                </div>
+
+                <div class="modal-footer justify-content-center" style="padding: 10px 24px 26px; gap: 12px; border: none;">
+                    <button type="button" class="btn btn-secondary-custom" data-bs-dismiss="modal"
+                            style="padding: 11px 26px; font-size: 15px;">
+                        لغو
+                    </button>
+                    <button type="submit" class="btn btn-danger"
+                            style="border-radius: 11px; padding: 11px 26px; font-weight: 600; font-size: 15px;">
+                        <i class="bi bi-trash-fill"></i> بله، حذف کن
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+    function resetForm() {
+        const form = document.getElementById('patientForm');
+        form.reset();
+        document.getElementById('formAction').value = 'create';
+        document.getElementById('formPatientId').value = '';
+        document.getElementById('modalTitle').innerHTML = '<i class="bi bi-person-plus-fill"></i> ثبت مریض جدید';
+        document.getElementById('submitBtn').innerHTML = '<i class="bi bi-check-lg"></i> ذخیره';
+    }
+
+    function editPatient(id, firstName, lastName, fatherName, gender, age, phone, address) {
+        document.getElementById('id_first_name').value = firstName;
+        document.getElementById('id_last_name').value = lastName;
+        document.getElementById('id_father_name').value = fatherName;
+        document.getElementById('id_gender').value = gender;
+        document.getElementById('id_age').value = age;
+        document.getElementById('id_phone').value = phone;
+        document.getElementById('id_address').value = address;
+
+        document.getElementById('formAction').value = 'update';
+        document.getElementById('formPatientId').value = id;
+        document.getElementById('modalTitle').innerHTML = '<i class="bi bi-pencil-fill"></i> ویرایش مریض';
+        document.getElementById('submitBtn').innerHTML = '<i class="bi bi-check-lg"></i> به‌روزرسانی';
+
+        new bootstrap.Modal(document.getElementById('patientModal')).show();
+    }
+
+    function confirmDelete(id, name) {
+        document.getElementById('deletePatientId').value = id;
+        document.getElementById('deletePatientName').textContent = name;
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    }
+
+    {% if open_modal == 'create' %}
+        document.getElementById('formAction').value = 'create';
+        new bootstrap.Modal(document.getElementById('patientModal')).show();
+    {% elif open_modal == 'update' and edit_patient %}
+        document.getElementById('formAction').value = 'update';
+        document.getElementById('formPatientId').value = {{ edit_patient.id }};
+        document.getElementById('modalTitle').innerHTML = '<i class="bi bi-pencil-fill"></i> ویرایش مریض';
+        document.getElementById('submitBtn').innerHTML = '<i class="bi bi-check-lg"></i> به‌روزرسانی';
+        new bootstrap.Modal(document.getElementById('patientModal')).show();
+    {% endif %}
+</script>
+{% endblock %}

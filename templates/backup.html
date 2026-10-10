@@ -1,0 +1,400 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ═══════════════════════════════════════════════════════════
+       Wrapper
+       ═══════════════════════════════════════════════════════════ */
+    .bk-wrap {
+        max-width: 860px;
+        margin: 0 auto;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       Header
+       ═══════════════════════════════════════════════════════════ */
+    .bk-header {
+        text-align: center;
+        margin-bottom: 34px;
+    }
+    .bk-header .icon-hero {
+        width: 88px;
+        height: 88px;
+        border-radius: 24px;
+        background: linear-gradient(135deg, #dc2626, #991b1b);
+        color: white;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 42px;
+        margin-bottom: 20px;
+        box-shadow: 0 12px 32px rgba(220,38,38,0.30);
+    }
+    .bk-header h1 {
+        margin: 0 0 10px;
+        font-size: 30px;
+        font-weight: 800;
+        color: #0f172a;
+        letter-spacing: -0.5px;
+    }
+    .bk-header p {
+        margin: 0;
+        font-size: 15px;
+        color: #6b7280;
+        font-weight: 500;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       Info cards
+       ═══════════════════════════════════════════════════════════ */
+    .bk-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 14px;
+        margin-bottom: 26px;
+    }
+    .bk-info-card {
+        background: white;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 18px 20px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        transition: all 0.15s;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+    .bk-info-card:hover {
+        border-color: #fca5a5;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+    }
+    .bk-info-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+    .bk-info-icon.red    { background: #fee2e2; color: #dc2626; }
+    .bk-info-icon.blue   { background: #dbeafe; color: #2563eb; }
+    .bk-info-icon.purple { background: #ede9fe; color: #7c3aed; }
+    .bk-info-icon.green  { background: #dcfce7; color: #059669; }
+
+    .bk-info-value {
+        font-size: 17px;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1.2;
+        margin-bottom: 3px;
+    }
+    .bk-info-label {
+        font-size: 11.5px;
+        font-weight: 700;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       Big action card
+       ═══════════════════════════════════════════════════════════ */
+    .bk-action {
+        background: white;
+        border-radius: 20px;
+        border: 1.5px solid #e5e7eb;
+        padding: 38px 34px;
+        text-align: center;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        margin-bottom: 24px;
+        position: relative;
+        overflow: hidden;
+    }
+    .bk-action::before {
+        content: '';
+        position: absolute;
+        top: -60px; right: -60px;
+        width: 200px; height: 200px;
+        background: radial-gradient(circle, #fef2f2, transparent 70%);
+        pointer-events: none;
+    }
+
+    .bk-action h2 {
+        margin: 0 0 12px;
+        font-size: 22px;
+        font-weight: 800;
+        color: #0f172a;
+        position: relative;
+    }
+    .bk-action p {
+        margin: 0 auto 28px;
+        font-size: 14.5px;
+        color: #6b7280;
+        font-weight: 500;
+        line-height: 1.8;
+        max-width: 540px;
+        position: relative;
+    }
+
+    .bk-download-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 18px 44px;
+        background: linear-gradient(135deg, #dc2626, #991b1b);
+        color: white;
+        border: none;
+        border-radius: 14px;
+        font-size: 16px;
+        font-weight: 800;
+        text-decoration: none;
+        cursor: pointer;
+        font-family: inherit;
+        box-shadow: 0 10px 28px rgba(220,38,38,0.35);
+        transition: all 0.2s;
+        letter-spacing: 0.3px;
+        position: relative;
+    }
+    .bk-download-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 16px 40px rgba(220,38,38,0.45);
+        color: white;
+    }
+    .bk-download-btn:active {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 20px rgba(220,38,38,0.30);
+    }
+    .bk-download-btn i {
+        font-size: 22px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       Includes list
+       ═══════════════════════════════════════════════════════════ */
+    .bk-includes {
+        background: white;
+        border-radius: 20px;
+        border: 1.5px solid #e5e7eb;
+        padding: 26px 30px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    }
+    .bk-includes h3 {
+        margin: 0 0 18px;
+        font-size: 14px;
+        font-weight: 800;
+        color: #0f172a;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .bk-includes h3 i {
+        color: #dc2626;
+        font-size: 17px;
+    }
+
+    .bk-includes-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .bk-include-item {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 13px 16px;
+        background: #fafafa;
+        border-radius: 12px;
+        border: 1px solid #f1f5f9;
+        transition: all 0.15s;
+    }
+    .bk-include-item:hover {
+        background: #f0fdf4;
+        border-color: #86efac;
+    }
+    .bk-include-item > i {
+        color: #059669;
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+    .bk-include-item .name {
+        font-size: 14px;
+        font-weight: 700;
+        color: #0f172a;
+        flex-shrink: 0;
+    }
+    .bk-include-item .desc {
+        font-size: 12.5px;
+        color: #94a3b8;
+        font-weight: 500;
+        margin-right: auto;
+        text-align: left;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       Warning
+       ═══════════════════════════════════════════════════════════ */
+    .bk-warning {
+        background: linear-gradient(135deg, #fffbeb, #fef3c7);
+        border: 1.5px solid #fcd34d;
+        border-radius: 14px;
+        padding: 16px 20px;
+        margin-top: 20px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    .bk-warning i {
+        color: #d97706;
+        font-size: 20px;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+    .bk-warning p {
+        margin: 0;
+        font-size: 13.5px;
+        color: #78350f;
+        font-weight: 600;
+        line-height: 1.8;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       Responsive
+       ═══════════════════════════════════════════════════════════ */
+    @media (max-width: 600px) {
+        .bk-header h1 { font-size: 22px; }
+        .bk-header .icon-hero { width: 68px; height: 68px; font-size: 32px; }
+        .bk-action { padding: 26px 20px; }
+        .bk-download-btn { padding: 15px 28px; font-size: 15px; }
+        .bk-includes { padding: 20px; }
+        .bk-include-item .desc { display: none; }
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<div class="bk-wrap">
+
+    <!-- ═══ Header ═══ -->
+    <div class="bk-header">
+        <div class="icon-hero">
+            <i class="bi bi-shield-check"></i>
+        </div>
+        <h1>پشتیبان‌گیری</h1>
+        <p>یک فایل ZIP کامل از تمام اطلاعات کلینیک دریافت کنید</p>
+    </div>
+
+
+    <!-- ═══ Info cards ═══ -->
+    <div class="bk-info">
+
+        <div class="bk-info-card">
+            <div class="bk-info-icon red">
+                <i class="bi bi-database-fill"></i>
+            </div>
+            <div>
+                <div class="bk-info-value">{{ db_size }}</div>
+                <div class="bk-info-label">دیتابیس</div>
+            </div>
+        </div>
+
+        <div class="bk-info-card">
+            <div class="bk-info-icon blue">
+                <i class="bi bi-images"></i>
+            </div>
+            <div>
+                <div class="bk-info-value">{{ media_size }}</div>
+                <div class="bk-info-label">{{ media_files }} فایل</div>
+            </div>
+        </div>
+
+        <div class="bk-info-card">
+            <div class="bk-info-icon purple">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <div>
+                <div class="bk-info-value">{{ total_patients }}</div>
+                <div class="bk-info-label">مریض</div>
+            </div>
+        </div>
+
+        <div class="bk-info-card">
+            <div class="bk-info-icon green">
+                <i class="bi bi-file-earmark-medical-fill"></i>
+            </div>
+            <div>
+                <div class="bk-info-value">{{ total_prescriptions }}</div>
+                <div class="bk-info-label">نسخه</div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- ═══ Action card ═══ -->
+    <div class="bk-action">
+        <h2>دانلود پشتیبان کامل</h2>
+        <p>
+            با کلیک روی دکمه زیر، یک فایل ZIP شامل دیتابیس، تمام فایل‌های آپلودشده،
+            و کد پروژه دانلود می‌شود. این فایل را در جای امن نگه دارید.
+        </p>
+
+        <a href="{% url 'backup_download' %}" class="bk-download-btn" download>
+            <i class="bi bi-cloud-arrow-down-fill"></i>
+            دانلود پشتیبان (ZIP)
+        </a>
+    </div>
+
+
+    <!-- ═══ What's included ═══ -->
+    <div class="bk-includes">
+
+        <h3>
+            <i class="bi bi-list-check"></i>
+            محتویات فایل پشتیبان
+        </h3>
+
+        <div class="bk-includes-list">
+
+            <div class="bk-include-item">
+                <i class="bi bi-check-circle-fill"></i>
+                <span class="name">دیتابیس</span>
+                <span class="desc">تمام مریض‌ها، نسخه‌ها، دواها و تنظیمات</span>
+            </div>
+
+            <div class="bk-include-item">
+                <i class="bi bi-check-circle-fill"></i>
+                <span class="name">فایل‌های آپلودشده</span>
+                <span class="desc">عکس‌های نسخه‌ها، دیزاین‌ها، فونت‌ها</span>
+            </div>
+
+           
+
+        </div>
+
+
+        <!-- ═══ Warning ═══ -->
+        <div class="bk-warning">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <p>
+                فایل پشتیبان حاوی اطلاعات محرمانه است.
+                لطفاً آن را در جای امن نگهداری کنید و به کسی ندهید.
+            </p>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

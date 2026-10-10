@@ -1,0 +1,388 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pp-wrapper {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    /* ═══ Header ═══ */
+    .pp-header {
+        background: linear-gradient(135deg, #dc2626, #991b1b);
+        color: white;
+        border-radius: 16px;
+        padding: 22px 26px;
+        margin-bottom: 24px;
+        box-shadow: 0 10px 30px rgba(220,38,38,0.25);
+    }
+
+    .pp-header h1 {
+        font-size: 22px;
+        font-weight: 800;
+        margin: 0 0 8px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .pp-header p {
+        margin: 0;
+        font-size: 14px;
+        opacity: 0.95;
+    }
+
+    /* ═══ Success Badge ═══ */
+    .pp-success {
+        text-align: center;
+        padding: 24px;
+        background: #f0fdf4;
+        border: 2px solid #86efac;
+        border-radius: 16px;
+        margin-bottom: 24px;
+    }
+
+    .pp-success-icon {
+        font-size: 64px;
+        color: #059669;
+        margin-bottom: 12px;
+    }
+
+    .pp-success h2 {
+        font-size: 22px;
+        font-weight: 800;
+        color: #065f46;
+        margin: 0 0 6px;
+    }
+
+    .pp-success p {
+        font-size: 14px;
+        color: #047857;
+        margin: 0;
+    }
+
+    /* ═══ Preview ═══ */
+    .pp-preview {
+        background: white;
+        border-radius: 16px;
+        border: 2px solid #e5e7eb;
+        padding: 20px;
+        margin-bottom: 24px;
+        text-align: center;
+    }
+
+    .pp-preview img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+        border: 1px solid #e5e7eb;
+    }
+
+    .pp-no-image {
+        padding: 60px 20px;
+        color: #9ca3af;
+        background: #f9fafb;
+        border-radius: 12px;
+    }
+
+    .pp-no-image i {
+        font-size: 64px;
+        display: block;
+        margin-bottom: 12px;
+        opacity: 0.4;
+    }
+
+    /* ═══ Actions ═══ */
+    .pp-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+
+    .pp-btn {
+        padding: 14px 20px;
+        border-radius: 12px;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        text-decoration: none;
+        transition: all 0.2s;
+        border: none;
+        font-family: inherit;
+    }
+
+    .pp-btn-print {
+        background: white;
+        color: #1f2937;
+        border: 2px solid #e5e7eb;
+    }
+
+    .pp-btn-print:hover {
+        background: #f9fafb;
+        border-color: #dc2626;
+        color: #dc2626;
+    }
+
+    .pp-btn-download {
+        background: white;
+        color: #1f2937;
+        border: 2px solid #e5e7eb;
+    }
+
+    .pp-btn-download:hover {
+        background: #f9fafb;
+        border-color: #0ea5e9;
+        color: #0284c7;
+    }
+
+    /* ═══ Back Button ═══ */
+    .pp-btn-back {
+        width: 100%;
+        padding: 16px 32px;
+        background: white;
+        color: #334155;
+        border: 2px solid #e5e7eb;
+        border-radius: 14px;
+        font-size: 16px;
+        font-weight: 800;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        text-decoration: none;
+        transition: all 0.2s;
+        font-family: inherit;
+    }
+
+    .pp-btn-back:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+        border-color: #cbd5e1;
+    }
+
+    /* ═══ Info ═══ */
+    .pp-info {
+        background: #eff6ff;
+        border: 2px solid #bfdbfe;
+        border-radius: 12px;
+        padding: 14px 18px;
+        margin-bottom: 20px;
+        font-size: 13px;
+        color: #1e40af;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    /* ═══ Meta Info (under image) ═══ */
+    .pp-meta {
+        background: white;
+        border-radius: 14px;
+        border: 2px solid #e5e7eb;
+        padding: 18px 22px;
+        margin-bottom: 20px;
+    }
+    .pp-meta-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 9px 0;
+        font-size: 14.5px;
+        border-bottom: 1px dashed #f1f5f9;
+    }
+    .pp-meta-row:last-child { border-bottom: none; }
+    .pp-meta-row .lbl {
+        color: #64748b;
+        font-weight: 700;
+        font-size: 13px;
+    }
+    .pp-meta-row .val {
+        color: #0f172a;
+        font-weight: 700;
+        text-align: left;
+    }
+    .pp-meta-row .val.empty { color: #cbd5e1; font-weight: 500; }
+
+    @media (max-width: 600px) {
+        .pp-actions { grid-template-columns: 1fr; }
+    }
+
+    /* ═══ Print Mode ═══ */
+    @media print {
+        .pp-header,
+        .pp-success,
+        .pp-actions,
+        .pp-meta,
+        .pp-btn-back,
+        .pp-info,
+        .sidebar,
+        .topbar,
+        .alert {
+            display: none !important;
+        }
+        .pp-preview {
+            border: none;
+            padding: 0;
+            box-shadow: none;
+            margin: 0;
+        }
+        .pp-preview img {
+            box-shadow: none;
+            border: none;
+            max-width: 100%;
+        }
+        .pp-wrapper {
+            padding: 0;
+            max-width: 100%;
+        }
+        body { background: white !important; }
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<div class="pp-wrapper">
+
+    <!-- ═══ Header ═══ -->
+    <div class="pp-header">
+        <h1>
+            <i class="bi bi-printer-fill"></i>
+            چاپ نسخه
+        </h1>
+        <p>
+            {{ prescription.patient.full_name }}
+            {% if prescription.prescription_number %}
+                — {{ prescription.prescription_number }}
+            {% endif %}
+        </p>
+    </div>
+
+
+    <!-- ═══ Success Badge ═══ -->
+    {% if prescription.edited_image %}
+    <div class="pp-success">
+        <div class="pp-success-icon">
+            <i class="bi bi-check-circle-fill"></i>
+        </div>
+        <h2>نسخه آماده چاپ است</h2>
+        <p>می‌توانید آن را چاپ یا دانلود کنید</p>
+    </div>
+    {% endif %}
+
+
+    <!-- ═══ Preview ═══ -->
+    <div class="pp-preview">
+        {% if prescription.edited_image %}
+            <img src="{{ prescription.edited_image.url }}"
+                 alt="نسخه {{ prescription.patient.full_name }}"
+                 id="prescriptionImage">
+        {% else %}
+            <div class="pp-no-image">
+                <i class="bi bi-image"></i>
+                <p>عکس نسخه تولید نشده است</p>
+            </div>
+        {% endif %}
+    </div>
+
+
+    <!-- ═══ Actions ═══ -->
+    {% if prescription.edited_image %}
+    <div class="pp-actions">
+        <button type="button" class="pp-btn pp-btn-print" onclick="printImage()">
+            <i class="bi bi-printer"></i>
+            چاپ
+        </button>
+        <a href="{{ prescription.edited_image.url }}" download
+           class="pp-btn pp-btn-download">
+            <i class="bi bi-download"></i>
+            دانلود
+        </a>
+    </div>
+    {% endif %}
+
+
+    <!-- ═══ Quick Meta ═══ -->
+    <div class="pp-meta">
+        <div class="pp-meta-row">
+            <span class="lbl">شماره نسخه</span>
+            <span class="val">{{ prescription.prescription_number }}</span>
+        </div>
+        <div class="pp-meta-row">
+            <span class="lbl">تاریخ</span>
+            <span class="val">{{ prescription.prescription_date|date:"Y-m-d" }}</span>
+        </div>
+        <div class="pp-meta-row">
+            <span class="lbl">تشخیص</span>
+            {% if prescription.diagnosis %}
+                <span class="val">{{ prescription.diagnosis }}</span>
+            {% else %}
+                <span class="val empty">—</span>
+            {% endif %}
+        </div>
+        <div class="pp-meta-row">
+            <span class="lbl">تعداد دواها</span>
+            <span class="val">{{ prescription.items_count }}</span>
+        </div>
+    </div>
+
+
+    <!-- ═══ Regenerate ═══ -->
+    <div class="pp-info">
+        <i class="bi bi-info-circle-fill" style="font-size: 20px;"></i>
+        <span>
+            اگر تصویر به‌درستی نمایش داده نمی‌شود،
+            <a href="{% url 'prescription_regenerate' prescription.pk %}"
+               style="color: #dc2626; font-weight: 800;">بازتولید کنید</a>.
+        </span>
+    </div>
+
+
+    <!-- ═══ Back ═══ -->
+    <a href="{% url 'prescription_list' %}" class="pp-btn-back">
+        <i class="bi bi-arrow-right"></i>
+        بازگشت به لیست نسخه‌ها
+    </a>
+
+</div>
+
+
+<script>
+function printImage() {
+    var img = document.getElementById('prescriptionImage');
+    if (!img) return;
+
+    var win = window.open('', '_blank');
+    win.document.write(
+        '<html><head><title>چاپ نسخه</title>' +
+        '<style>' +
+            '* { margin: 0; padding: 0; box-sizing: border-box; }' +
+            'html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: white; }' +
+            'body { display: flex; align-items: center; justify-content: center; }' +
+            'img { display: block; max-width: 100%; max-height: 100vh; width: auto; height: auto; object-fit: contain; }' +
+            '@page { margin: 0; size: auto; }' +
+            '@media print {' +
+                'html, body { margin: 0 !important; padding: 0 !important; }' +
+                'img { max-width: 100% !important; max-height: 100vh !important; }' +
+            '}' +
+        '</style></head>' +
+        '<body>' +
+            '<img src="' + img.src + '" onload="setTimeout(function(){window.print(); window.close();}, 100);">' +
+        '</body></html>'
+    );
+    win.document.close();
+}
+</script>
+
+{% endblock %}

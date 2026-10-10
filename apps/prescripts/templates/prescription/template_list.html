@@ -1,0 +1,939 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ============================================================
+       Header
+       ============================================================ */
+    .tpl-page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    .tpl-page-header h1 {
+        margin: 0 0 4px;
+        font-size: 26px;
+        font-weight: 800;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .tpl-page-header p {
+        margin: 0;
+        font-size: 14px;
+        color: #6b7280;
+    }
+
+    .btn-create-tpl {
+        background: linear-gradient(135deg, #7c3aed, #6d28d9);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 11px;
+        font-weight: 700;
+        font-size: 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 6px 18px rgba(124,58,237,0.3);
+        font-family: inherit;
+    }
+    .btn-create-tpl:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 24px rgba(124,58,237,0.4);
+        color: white;
+    }
+
+    /* ============================================================
+       Stats
+       ============================================================ */
+    .tpl-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+    .tpl-stat {
+        background: white;
+        border-radius: 14px;
+        padding: 14px 18px;
+        border: 1.5px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 3px 12px rgba(0,0,0,0.04);
+    }
+    .tpl-stat .ic {
+        width: 42px; height: 42px;
+        border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 20px; flex-shrink: 0;
+    }
+    .tpl-stat .ic.total   { background: #ede9fe; color: #5b21b6; }
+    .tpl-stat .ic.active  { background: #dcfce7; color: #166534; }
+    .tpl-stat .ic.default { background: #fef3c7; color: #92400e; }
+    .tpl-stat .num { font-size: 22px; font-weight: 800; line-height: 1; color: #0f172a; }
+    .tpl-stat .lbl { font-size: 12.5px; color: #6b7280; font-weight: 600; margin-top: 3px; }
+
+    /* ============================================================
+       Grid
+       ============================================================ */
+    .tpl-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+        gap: 20px;
+    }
+
+    .tpl-card {
+        background: white;
+        border-radius: 18px;
+        overflow: hidden;
+        border: 2px solid #e5e7eb;
+        transition: all 0.25s;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+    }
+    .tpl-card:hover {
+        border-color: #7c3aed;
+        transform: translateY(-4px);
+        box-shadow: 0 16px 40px rgba(124,58,237,0.15);
+    }
+    .tpl-card.is-default {
+        border-color: #7c3aed;
+        box-shadow: 0 0 0 4px rgba(124,58,237,0.1);
+    }
+    .tpl-card.is-inactive { opacity: 0.7; }
+    .tpl-card.is-inactive:hover { opacity: 1; }
+
+    .tpl-badges {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        left: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        z-index: 2;
+        pointer-events: none;
+        gap: 6px;
+    }
+    .tpl-badge {
+        padding: 5px 11px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .tpl-badge.default {
+        background: #7c3aed;
+        color: white;
+        box-shadow: 0 4px 12px rgba(124,58,237,0.4);
+    }
+    .tpl-badge.fields {
+        background: rgba(219, 234, 254, 0.95);
+        color: #1e40af;
+        border: 1.5px solid #93c5fd;
+    }
+    .tpl-badge.inactive {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1.5px solid #fca5a5;
+    }
+
+    /* Thumbnail */
+    .tpl-thumb {
+        width: 100%;
+        height: 220px;
+        background: #f8fafc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        border-bottom: 1.5px solid #e5e7eb;
+        position: relative;
+    }
+    .tpl-thumb img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        display: block;
+    }
+    .tpl-thumb .no-image { font-size: 56px; color: #cbd5e1; }
+
+    /* Body */
+    .tpl-body {
+        padding: 18px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    .tpl-name {
+        font-size: 17px;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0 0 6px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        word-break: break-word;
+    }
+    .tpl-description {
+        font-size: 13px;
+        color: #6b7280;
+        margin: 0 0 14px;
+        line-height: 1.6;
+        flex: 1;
+        min-height: 42px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .tpl-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 12px;
+        border-top: 1.5px dashed #e5e7eb;
+        font-size: 12px;
+        color: #94a3b8;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    .tpl-meta .item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    /* Actions */
+    .tpl-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+    .tpl-action {
+        background: #f8fafc;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 10px 8px;
+        font-size: 12.5px;
+        font-weight: 700;
+        cursor: pointer;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: all 0.15s;
+        color: #475569;
+        white-space: nowrap;
+        font-family: inherit;
+    }
+    .tpl-action i { font-size: 15px; }
+
+    .tpl-action.edit {
+        background: linear-gradient(135deg, #7c3aed, #6d28d9);
+        color: white;
+        border-color: transparent;
+        grid-column: span 2;
+    }
+    .tpl-action.edit:hover {
+        background: linear-gradient(135deg, #6d28d9, #5b21b6);
+        transform: translateY(-2px);
+        color: white;
+        box-shadow: 0 6px 16px rgba(124,58,237,0.35);
+    }
+
+    .tpl-action.set-default {
+        background: #f0fdf4;
+        color: #059669;
+        border-color: #bbf7d0;
+    }
+    .tpl-action.set-default:hover {
+        background: #059669;
+        color: white;
+        border-color: #059669;
+    }
+
+    .tpl-action.delete {
+        background: #fee2e2;
+        color: #991b1b;
+        border-color: #fca5a5;
+    }
+    .tpl-action.delete:hover {
+        background: #dc2626;
+        color: white;
+        border-color: #dc2626;
+    }
+
+    .tpl-action.is-current {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    /* ============================================================
+       Empty State
+       ============================================================ */
+    .empty-state {
+        text-align: center;
+        padding: 80px 30px;
+        background: white;
+        border-radius: 20px;
+        border: 3px dashed #e5e7eb;
+    }
+    .empty-state .icon {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 24px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #ede9fe, #f5f3ff);
+        color: #7c3aed;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 52px;
+    }
+    .empty-state h3 {
+        font-size: 22px;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0 0 10px;
+    }
+    .empty-state p {
+        color: #6b7280;
+        font-size: 15px;
+        margin: 0 0 24px;
+        line-height: 1.7;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* ============================================================
+       Modal
+       ============================================================ */
+    .modal-content {
+        border-radius: 20px;
+        overflow: hidden;
+        border: none;
+    }
+    .modal-header {
+        background: linear-gradient(135deg, #7c3aed, #6d28d9);
+        color: white;
+        padding: 22px 26px;
+        border: none;
+    }
+    .modal-header h5 {
+        font-weight: 800;
+        font-size: 18px;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .modal-body {
+        padding: 26px;
+        background: #f9fafb;
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+    .modal-footer {
+        background: white;
+        border-top: 1.5px solid #e5e7eb;
+        padding: 16px 26px;
+    }
+
+    .form-group { margin-bottom: 18px; }
+    .form-group label {
+        display: block;
+        font-size: 13px;
+        font-weight: 700;
+        color: #374151;
+        margin-bottom: 6px;
+    }
+    .form-group .form-control,
+    .form-group .form-select {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 10px;
+        font-size: 14px;
+        background: white;
+        transition: all 0.2s;
+        font-family: inherit;
+    }
+    .form-group .form-control:focus,
+    .form-group .form-select:focus {
+        outline: none;
+        border-color: #7c3aed;
+        box-shadow: 0 0 0 3px rgba(124,58,237,0.1);
+    }
+    .form-group small {
+        display: block;
+        font-size: 12px;
+        color: #6b7280;
+        margin-top: 6px;
+        line-height: 1.5;
+    }
+
+    /* Upload Zone */
+    .upload-zone {
+        border: 2.5px dashed #cbd5e1;
+        border-radius: 12px;
+        padding: 32px 20px;
+        text-align: center;
+        background: #f9fafb;
+        transition: all 0.25s;
+        cursor: pointer;
+        margin-bottom: 16px;
+    }
+    .upload-zone:hover,
+    .upload-zone.dragover {
+        border-color: #7c3aed;
+        background: #f5f3ff;
+    }
+    .upload-zone i {
+        font-size: 44px;
+        color: #94a3b8;
+        display: block;
+        margin-bottom: 12px;
+        transition: color 0.2s;
+    }
+    .upload-zone.dragover i { color: #7c3aed; }
+    .upload-zone .dz-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: #334155;
+        margin-bottom: 4px;
+    }
+    .upload-zone .dz-hint {
+        font-size: 12.5px;
+        color: #94a3b8;
+    }
+
+    .preview-mini {
+        margin-top: 14px;
+        padding: 12px;
+        background: #f0fdf4;
+        border: 1.5px solid #86efac;
+        border-radius: 10px;
+        text-align: center;
+    }
+    .preview-mini img {
+        max-width: 100%;
+        max-height: 200px;
+        border-radius: 8px;
+        border: 1.5px solid #86efac;
+        box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+    }
+    .preview-mini .filename {
+        font-size: 12px;
+        color: #065f46;
+        font-weight: 700;
+        margin-top: 8px;
+    }
+    .preview-mini .btn-remove {
+        margin-top: 8px;
+        background: #fee2e2;
+        color: #991b1b;
+        border: none;
+        padding: 5px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        font-family: inherit;
+    }
+    .preview-mini .btn-remove:hover {
+        background: #dc2626;
+        color: white;
+    }
+
+    .switch-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 14px;
+        background: white;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        transition: all 0.15s;
+    }
+    .switch-group:hover {
+        border-color: #c4b5fd;
+        background: #faf5ff;
+    }
+    .switch-group input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        accent-color: #7c3aed;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+    .switch-group label {
+        margin: 0;
+        font-weight: 600;
+        font-size: 14px;
+        color: #334155;
+        cursor: pointer;
+        flex: 1;
+    }
+
+    .btn-submit {
+        background: linear-gradient(135deg, #7c3aed, #6d28d9);
+        color: white;
+        border: none;
+        padding: 12px 26px;
+        border-radius: 11px;
+        font-weight: 700;
+        font-size: 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: inherit;
+    }
+    .btn-submit:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 22px rgba(124,58,237,0.4);
+        color: white;
+    }
+    .btn-submit:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .btn-cancel {
+        background: #f3f4f6;
+        color: #374151;
+        border: none;
+        padding: 12px 26px;
+        border-radius: 11px;
+        font-weight: 700;
+        font-size: 14px;
+        cursor: pointer;
+        font-family: inherit;
+        transition: all 0.15s;
+    }
+    .btn-cancel:hover {
+        background: #e5e7eb;
+        color: #111827;
+    }
+
+    @media (max-width: 576px) {
+        .tpl-grid { grid-template-columns: 1fr; }
+        .tpl-actions { grid-template-columns: 1fr; }
+        .tpl-action.edit { grid-column: span 1; }
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<!-- ============ Header ============ -->
+<div class="tpl-page-header">
+    <div>
+        <h1>
+            <i class="bi bi-palette-fill text-primary"></i>
+            {{ page_title }}
+        </h1>
+        <p>مدیریت دیزاین‌های نسخه — هر دیزاین شامل عکس پس‌زمینه و فیلدهای مقداری است</p>
+    </div>
+
+    <button class="btn-create-tpl" data-bs-toggle="modal" data-bs-target="#createTemplateModal">
+        <i class="bi bi-plus-circle-fill"></i>
+        ساخت دیزاین جدید
+    </button>
+</div>
+
+
+<!-- ============ آمار ============ -->
+<div class="tpl-stats">
+    <div class="tpl-stat">
+        <div class="ic total"><i class="bi bi-collection-fill"></i></div>
+        <div>
+            <div class="num">{{ stats.total }}</div>
+            <div class="lbl">مجموع دیزاین‌ها</div>
+        </div>
+    </div>
+    <div class="tpl-stat">
+        <div class="ic active"><i class="bi bi-check-circle-fill"></i></div>
+        <div>
+            <div class="num">{{ stats.active }}</div>
+            <div class="lbl">دیزاین‌های فعال</div>
+        </div>
+    </div>
+    <div class="tpl-stat">
+        <div class="ic default"><i class="bi bi-star-fill"></i></div>
+        <div>
+            <div class="num">{{ stats.default }}</div>
+            <div class="lbl">دیزاین پیش‌فرض</div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ============ Grid ============ -->
+{% if templates %}
+<div class="tpl-grid">
+    {% for tpl in templates %}
+    <div class="tpl-card {% if tpl.is_default %}is-default{% endif %} {% if not tpl.is_active %}is-inactive{% endif %}">
+
+        <div class="tpl-badges">
+            <div>
+                <span class="tpl-badge fields">
+                    <i class="bi bi-grid-3x3-gap-fill"></i>
+                    {{ tpl.fields.count }} فیلد
+                </span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-end;">
+                {% if tpl.is_default %}
+                <span class="tpl-badge default">
+                    <i class="bi bi-star-fill"></i> پیش‌فرض
+                </span>
+                {% endif %}
+                {% if not tpl.is_active %}
+                <span class="tpl-badge inactive">
+                    <i class="bi bi-x-circle"></i> غیرفعال
+                </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="tpl-thumb">
+            {% if tpl.background_image %}
+                <img src="{{ tpl.background_image.url }}" alt="{{ tpl.name }}">
+            {% else %}
+                <i class="bi bi-image no-image"></i>
+            {% endif %}
+        </div>
+
+        <div class="tpl-body">
+            <h3 class="tpl-name">
+                <i class="bi bi-file-earmark-image text-primary"></i>
+                {{ tpl.name }}
+            </h3>
+
+            <p class="tpl-description">
+                {{ tpl.description|default:"بدون توضیحات" }}
+            </p>
+
+            <div class="tpl-meta">
+                <span class="item">
+                    <i class="bi bi-calendar3"></i>
+                    {{ tpl.created_at|date:"Y-m-d" }}
+                </span>
+                <span class="item">
+                    <i class="bi bi-grid-3x3-gap-fill"></i>
+                    {{ tpl.fields.count }} فیلد
+                </span>
+            </div>
+
+            <div class="tpl-actions">
+
+                <a href="{% url 'template_edit' tpl.id %}"
+                   class="tpl-action edit"
+                   title="ویرایش در ویرایشگر">
+                    <i class="bi bi-pencil-fill"></i>
+                    ویرایش در ویرایشگر
+                </a>
+
+                {% if not tpl.is_default %}
+                <form method="post" style="display: contents;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="set_default">
+                    <input type="hidden" name="template_id" value="{{ tpl.id }}">
+                    <button type="submit" class="tpl-action set-default" title="تنظیم پیش‌فرض">
+                        <i class="bi bi-star-fill"></i>
+                        پیش‌فرض
+                    </button>
+                </form>
+                {% else %}
+                <div class="tpl-action is-current" title="این دیزاین پیش‌فرض است">
+                    <i class="bi bi-star-fill" style="color:#7c3aed;"></i>
+                    پیش‌فرض
+                </div>
+                {% endif %}
+
+                <button type="button"
+                        class="tpl-action delete"
+                        onclick="confirmDelete({{ tpl.id }}, '{{ tpl.name|escapejs }}', {{ tpl.prescriptions.count }})"
+                        title="حذف">
+                    <i class="bi bi-trash-fill"></i>
+                    حذف
+                </button>
+
+            </div>
+        </div>
+
+    </div>
+    {% endfor %}
+</div>
+
+{% else %}
+
+<div class="empty-state">
+    <div class="icon">
+        <i class="bi bi-palette-fill"></i>
+    </div>
+    <h3>هیچ دیزاینی وجود ندارد</h3>
+    <p>
+        برای شروع، یک دیزاین نسخه بسازید.
+        دیزاین شامل یک عکس پس‌زمینه است که فیلدهای مقداری روی آن قرار می‌گیرند.
+    </p>
+    <button class="btn-create-tpl" data-bs-toggle="modal" data-bs-target="#createTemplateModal">
+        <i class="bi bi-plus-circle-fill"></i>
+        ساخت اولین دیزاین
+    </button>
+</div>
+
+{% endif %}
+
+
+<!-- ============================================================
+     Modal: ساخت دیزاین
+     ============================================================ -->
+<div class="modal fade" id="createTemplateModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" enctype="multipart/form-data" id="createTemplateForm">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create">
+
+                <div class="modal-header">
+                    <h5>
+                        <i class="bi bi-palette-fill"></i>
+                        ساخت دیزاین جدید
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="form-group">
+                        <label>نام دیزاین *</label>
+                        {{ form.name }}
+                    </div>
+
+                    <div class="form-group">
+                        <label>توضیحات</label>
+                        {{ form.description }}
+                    </div>
+
+                    <div class="form-group">
+                        <label>عکس پس‌زمینه *</label>
+
+                        <div class="upload-zone" id="uploadZone"
+                             onclick="document.getElementById('id_background_image').click();">
+                            <i class="bi bi-cloud-arrow-up-fill"></i>
+                            <div class="dz-title">
+                                برای انتخاب عکس کلیک کنید یا فایل را اینجا رها کنید
+                            </div>
+                            <div class="dz-hint">
+                                فرمت: JPG, PNG — حداکثر ۲۰ مگابایت
+                            </div>
+                        </div>
+
+                        <div style="display: none;">
+                            {{ form.background_image }}
+                        </div>
+
+                        <div class="preview-mini" id="previewMini" style="display: none;">
+                            <img id="previewImg" src="" alt="پیش‌نمایش">
+                            <div class="filename" id="previewFilename"></div>
+                            <button type="button" class="btn-remove" onclick="removeImage()">
+                                <i class="bi bi-x-lg"></i> حذف
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="switch-group">
+                        {{ form.is_default }}
+                        <label for="{{ form.is_default.id_for_label }}">
+                            تنظیم به عنوان دیزاین پیش‌فرض
+                        </label>
+                    </div>
+
+                    <div class="switch-group">
+                        {{ form.is_active }}
+                        <label for="{{ form.is_active.id_for_label }}">
+                            فعال است
+                        </label>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg"></i> لغو
+                    </button>
+                    <button type="submit" class="btn-submit">
+                        <i class="bi bi-check-lg"></i> ساخت و ویرایش فیلدها
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- ============================================================
+     Modal: حذف
+     ============================================================ -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 460px;">
+        <div class="modal-content">
+            <form method="post" id="deleteForm">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="template_id" id="deleteTemplateId" value="">
+
+                <div class="modal-body text-center" style="padding: 40px 30px 20px;">
+                    <div style="width: 90px; height: 90px; margin: 0 auto 20px; border-radius: 50%;
+                                background: #fee2e2; display: flex; align-items: center;
+                                justify-content: center; font-size: 44px; color: #dc2626;">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3" style="font-size: 22px;">تایید حذف</h4>
+                    <p class="text-muted mb-0" style="font-size: 15.5px; line-height: 1.9;">
+                        آیا مطمئن هستید که می‌خواهید دیزاین<br>
+                        <strong id="deleteTemplateName" class="text-dark" style="font-size: 17px;"></strong><br>
+                        را حذف کنید؟
+                    </p>
+                    <p id="deleteWarningText" class="text-warning mt-3 mb-0" style="font-size: 13.5px; display: none;">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        این دیزاین به نسخه‌هایی وصل است. به جای حذف، غیرفعال می‌شود.
+                    </p>
+                </div>
+                <div class="modal-footer justify-content-center" style="padding: 10px 24px 26px; gap: 12px; border: none;">
+                    <button type="button" class="btn-cancel" data-bs-dismiss="modal"
+                            style="padding: 11px 26px;">لغو</button>
+                    <button type="submit" class="btn btn-danger"
+                            style="border-radius: 11px; padding: 11px 26px; font-weight: 700; font-size: 15px;">
+                        <i class="bi bi-trash-fill"></i> بله، حذف کن
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+    // ============================================================
+    // Upload Preview
+    // ============================================================
+    const fileInput = document.getElementById('id_background_image');
+    const uploadZone = document.getElementById('uploadZone');
+    const previewMini = document.getElementById('previewMini');
+    const previewImg = document.getElementById('previewImg');
+    const previewFilename = document.getElementById('previewFilename');
+
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) {
+                alert('لطفاً فقط فایل تصویری انتخاب کنید.');
+                return;
+            }
+            if (file.size > 20 * 1024 * 1024) {
+                alert('حجم فایل نباید بیشتر از ۲۰ مگابایت باشد.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImg.src = e.target.result;
+                previewFilename.textContent = file.name;
+                previewMini.style.display = 'block';
+                uploadZone.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // Drag & Drop
+    if (uploadZone) {
+        ['dragenter', 'dragover'].forEach(evt => {
+            uploadZone.addEventListener(evt, e => {
+                e.preventDefault();
+                uploadZone.classList.add('dragover');
+            });
+        });
+        ['dragleave', 'drop'].forEach(evt => {
+            uploadZone.addEventListener(evt, e => {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+            });
+        });
+        uploadZone.addEventListener('drop', e => {
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                fileInput.files = e.dataTransfer.files;
+                fileInput.dispatchEvent(new Event('change'));
+            }
+        });
+    }
+
+    function removeImage() {
+        if (fileInput) fileInput.value = '';
+        if (previewMini) previewMini.style.display = 'none';
+        if (uploadZone) uploadZone.style.display = 'block';
+    }
+
+    // ============================================================
+    // Delete Confirmation
+    // ============================================================
+    function confirmDelete(id, name, prescriptionCount) {
+        document.getElementById('deleteTemplateId').value = id;
+        document.getElementById('deleteTemplateName').textContent = name;
+
+        const warningText = document.getElementById('deleteWarningText');
+        if (prescriptionCount > 0) {
+            warningText.style.display = 'block';
+            warningText.innerHTML = `
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                این دیزاین به <strong>${prescriptionCount} نسخه</strong> وصل است.
+                به جای حذف، <strong>غیرفعال</strong> می‌شود.
+            `;
+        } else {
+            warningText.style.display = 'none';
+        }
+
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    }
+
+    // ============================================================
+    // Reset form on modal close
+    // ============================================================
+    const modal = document.getElementById('createTemplateModal');
+    if (modal) {
+        modal.addEventListener('hidden.bs.modal', function() {
+            document.getElementById('createTemplateForm').reset();
+            removeImage();
+        });
+    }
+</script>
+{% endblock %}
